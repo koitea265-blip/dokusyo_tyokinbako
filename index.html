@@ -99,11 +99,6 @@
         .bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
         .br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
 
-        .barcode-img {
-            width: 60%; height: 50%;
-            background: repeating-linear-gradient(90deg, rgba(255, 82, 82, 0.1) 0px, rgba(255, 82, 82, 0.1) 2px, transparent 2px, transparent 4px);
-        }
-
         .scan-line {
             position: absolute;
             top: 50%; left: 0; width: 100%; height: 2px;
@@ -126,7 +121,7 @@
             z-index: 100;
         }
 
-        /* --- タブレイアウト：上寄せ(flex-start)を徹底 --- */
+        /* --- タブレイアウト --- */
         .tab-content { display: none; height: 100%; overflow-y: auto; }
         .tab-content.active { display: flex; flex-direction: column; justify-content: flex-start; }
         
@@ -134,7 +129,6 @@
 
         .nav-btn.active { color: #FF7043; background: #FFF0F0; border-top: 4px solid #FF7043; }
         
-        /* 貯金箱のわく */
         .chokin-box {
             background-color: white;
             padding: 6px 4px;
@@ -211,23 +205,25 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        
+        .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         
-        <!-- ヘッダーをさらに薄く -->
+        <!-- ヘッダー -->
         <header class="bg-[#FFCCBC] py-2 px-3 text-center shrink-0 border-b-2 border-[#FFAB91]">
             <h1 class="text-xl font-black text-[#D84315] flex items-center justify-center gap-2 leading-none">
                 <span class="text-2xl">📖</span> どくしょ　ちょきんばこ
             </h1>
         </header>
 
-        <!-- 【ホーム】上詰めレイアウト -->
+        <!-- 【ホーム】 -->
         <main id="tab-home" class="tab-content active flex-1 p-3 gap-2 overflow-hidden">
             
-            <!-- ① 貯金箱エリア -->
+            <!-- ① ちょきんエリア -->
             <div class="bg-[#FFF3E0] rounded-[1.5rem] p-3 border-2 border-[#FFB74D] shadow-sm shrink-0">
                 <h3 class="section-title">いままでによんだほんのちょきん</h3>
                 <div class="flex flex-col gap-1.5">
@@ -252,7 +248,7 @@
                     </div>
                 </div>
 
-                <!-- 操作ボタンをよりコンパクトに -->
+                <!-- 操作ボタン -->
                 <div class="flex flex-wrap gap-1.5 mt-2">
                     <button onclick="copyForSpreadsheet()" class="w-full py-1.5 bg-[#4CAF50] text-white rounded-lg font-black text-[10px] shadow active:scale-95 flex items-center justify-center gap-1 border-b-2 border-[#2E7D32]">
                         <span>📊</span> スプレッドシートに コピー
@@ -346,7 +342,7 @@
             </div>
         </main>
 
-        <!-- ナビゲーションを低く -->
+        <!-- ナビゲーション -->
         <nav class="bg-white border-t-2 border-[#FFCCBC] h-16 shrink-0 flex items-center justify-around pb-1">
             <button onclick="switchTab('home')" id="nav-home" class="nav-btn active flex-1 flex flex-col items-center justify-center h-full">
                 <span class="text-2xl">🏠</span>
@@ -363,7 +359,7 @@
         </nav>
     </div>
 
-    <!-- モーダル：ヘルプ -->
+    <!-- ヘルプ -->
     <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl">
             <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
@@ -384,10 +380,6 @@
                     <p class="text-[#4527A0] mb-0.5 font-black text-sm">💾 ほぞんと よむ</p>
                     <p class="text-[11px] font-medium leading-relaxed">いきままでの きろくを、ファイルにして ほぞん したり、もとに もどしたり できるよ。</p>
                 </div>
-                <div class="bg-[#FBE9E7] p-3 rounded-xl border border-[#FFAB91]">
-                    <p class="text-[#D84315] mb-0.5 font-black text-sm">💰 ほんの ちょきん</p>
-                    <p class="text-[11px] font-medium leading-relaxed">よんだ かずや ぺーじ、おかねが たまっていくよ！</p>
-                </div>
             </div>
             <button onclick="hideHelp()" class="mt-4 w-full py-3 bg-[#FF7043] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#E64A19]">わかった！</button>
         </div>
@@ -397,7 +389,7 @@
     <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60">
         <div class="bg-white w-full max-w-md rounded-[2rem] p-5 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <h3 class="text-xl font-black text-[#0288D1] mb-3 text-center">🔎 ほんを さがす</h3>
-            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left">
+            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left">
                 <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
                     <label class="text-xs font-black text-[#0277BD]">バーコードの すうじ</label>
                     <div class="flex gap-2 mt-1">
@@ -408,17 +400,17 @@
                 <div id="search-candidates"></div>
                 <div class="border-t-2 border-dashed border-gray-200 pt-4">
                     <label class="text-[10px] font-black text-gray-400 ml-1">本の なまえ</label>
-                    <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
+                    <input type="text" id="input-title" oninput="clearError('title')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400 ml-1">かいた ひと</label>
                     <input type="text" id="input-author" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <div class="flex gap-3">
                         <div class="flex-1">
                             <label class="text-[10px] font-black text-gray-400 ml-1">ページ</label>
-                            <input type="number" id="input-pages" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
+                            <input type="number" id="input-pages" oninput="clearError('pages')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
                         <div class="flex-1">
                             <label class="text-[10px] font-black text-gray-400 ml-1">ねだん</label>
-                            <input type="number" id="input-price" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
+                            <input type="number" id="input-price" oninput="clearError('price')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
                     </div>
                 </div>
@@ -437,9 +429,12 @@
         </div>
     </div>
 
+    <div id="notice-msg"></div>
+
     <script>
-        let logs = JSON.parse(localStorage.getItem('reading_record_v167_logs')) || [];
-        let goals = JSON.parse(localStorage.getItem('reading_record_v167_goals')) || {};
+        // --- 状態管理 ---
+        let logs = JSON.parse(localStorage.getItem('reading_record_v169_logs')) || [];
+        let goals = JSON.parse(localStorage.getItem('reading_record_v169_goals')) || {};
         let isScannerRunning = false;
         let isProcessingBarcode = false;
         let lastCodes = [];
@@ -548,38 +543,126 @@
                 </div>`).join('');
         }
 
-        function updateGoal(val) { const { year, month } = getCurrentSelectedMonth(); goals[`${year}-${month}`] = parseInt(val) || 10; localStorage.setItem('reading_record_v167_goals', JSON.stringify(goals)); renderAll(); }
+        function updateGoal(val) { const { year, month } = getCurrentSelectedMonth(); goals[`${year}-${month}`] = parseInt(val) || 10; localStorage.setItem('reading_record_v169_goals', JSON.stringify(goals)); renderAll(); }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
         function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
-        function saveDataFile() { const data = { logs, goals, version: "v167" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップを ほぞんしました！"); }
-        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v167_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v167_goals', JSON.stringify(goals)); renderAll(); showNotice("データを ふくげんしました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
+        function saveDataFile() { const data = { logs, goals, version: "v169" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップを ほぞんしました！"); }
+        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v169_goals', JSON.stringify(goals)); renderAll(); showNotice("データを ふくげんしました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
+        
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() { isScannerRunning = false; isProcessingBarcode = false; try { Quagga.stop(); } catch(e) {} document.querySelectorAll('video').forEach(v => { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.remove(); }); document.getElementById('btn-text').innerText = "バーコード"; document.getElementById('guide-box').classList.add('hidden'); document.getElementById('scanner-cover').classList.remove('hidden'); document.getElementById('success-overlay').style.display = "none"; const c = document.querySelector('#interactive canvas'); if (c) c.remove(); }
         async function startScanner() { if (isScannerRunning) return; applyToForm("", "", "", ""); document.getElementById('btn-text').innerText = "とめる"; try { Quagga.init({ inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { width: 1280, height: 720, facingMode: "environment" }, area: { top: "25%", bottom: "25%" } }, decoder: { readers: ["ean_reader"] }, frequency: 25, numOfWorkers: 4, locator: { patchSize: "medium", halfSample: true } }, (err) => { if (err) { stopScanner(); return; } Quagga.start(); isScannerRunning = true; document.getElementById('scanner-cover').classList.add('hidden'); document.getElementById('guide-box').classList.remove('hidden'); }); } catch (e) { stopScanner(); } }
         Quagga.onDetected(data => { const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13) return; isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; setTimeout(() => { showManualModal(code, true); searchBookData(code); stopScanner(); }, 200); });
 
+        // --- 核心：最強データ取得ロジック (復元) ---
         async function searchBookData(isbn) {
-            const la = document.getElementById('search-candidates'); applyToForm("", "", "", ""); la.innerHTML = `<div class="text-center py-6 text-xl text-gray-500 font-black animate-pulse">しらべています...</div>`;
-            let res = { title: "", author: "", price: "" }; let pageCandidates = [];
-            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items && data.items.length > 0) { const info = data.items[0].volumeInfo; if (!res.title) res.title = info.title; if (!res.author) res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) res.price = extractCleanNum(data.items[0].saleInfo.listPrice.amount).toString(); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data && data[0]) { const b = data[0].summary; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); } }).catch(() => {});
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(); const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc)); const pr = item.querySelector("price")?.textContent; if(pr && !res.price) res.price = extractCleanNum(pr).toString(); } }).catch(() => {});
+            const la = document.getElementById('search-candidates'); 
+            applyToForm("", "", "", ""); 
+            la.innerHTML = `<div class="text-center py-6 text-xl text-gray-500 font-black animate-pulse">ネットで さがしています...</div>`;
+            
+            let res = { title: "", author: "", price: "" };
+            let pageCandidates = [];
+            let priceCandidates = [];
+
+            // 1. Google Books (全文紹介解析)
+            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
+                if (data.items && data.items.length > 0) {
+                    const info = data.items[0].volumeInfo;
+                    if (!res.title) res.title = info.title;
+                    if (!res.author) res.author = cleanAuthorName(info.authors?.join(' '));
+                    if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
+                    if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
+                    pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || ""));
+                }
+            }).catch(() => {});
+
+            // 2. openBD (ONIX詳細深層取得)
+            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => {
+                if (data && data[0]) {
+                    const b = data[0].summary;
+                    const onix = data[0].onix;
+                    if (!res.title) res.title = b.title;
+                    if (!res.author) res.author = cleanAuthorName(b.author);
+                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages));
+                    try {
+                        const prs = onix?.ProductSupply?.SupplyDetail?.Price;
+                        if (prs) [].concat(prs).forEach(p => { if(p.PriceAmount) priceCandidates.push(extractCleanNum(p.PriceAmount)); });
+                        const exts = onix?.DescriptiveDetail?.Extent;
+                        if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); });
+                    } catch(e) {}
+                }
+            }).catch(() => {});
+
+            // 3. NDL (記述解析復元)
+            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
+                const txt = await r.text();
+                const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item");
+                if (items.length > 0) {
+                    const item = items[0];
+                    if (!res.title) res.title = item.querySelector("title")?.textContent;
+                    const desc = item.querySelector("description")?.textContent;
+                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    const extent = item.querySelector("extent")?.textContent;
+                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                    const pr = item.querySelector("price")?.textContent;
+                    if(pr) priceCandidates.push(extractCleanNum(pr));
+                }
+            }).catch(() => {});
+
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
+
+            // 最大値を採用するロジック
             let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
-            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${res.price}')" class="flex items-center gap-4 p-5 bg-blue-50 border-4 border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-100 transition-all text-left"><div class="flex-1 overflow-hidden"><span class="text-sm bg-blue-500 text-white px-4 py-1 rounded-full font-black">みつけた！</span><p class="text-xl font-black text-gray-800 line-clamp-1 mt-2">${res.title}</p></div><span class="text-xl font-black text-blue-500">えらぶ</span></div>`; applyToForm(res.title, res.author, finalPages, res.price); } else { la.innerHTML = `<p class="text-center py-6 text-xl text-gray-400 font-black">みつからなかったよ</p>`; applyToForm("", "", "", ""); }
+            let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
+
+            if (res.title) {
+                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="flex items-center gap-4 p-5 bg-blue-50 border-4 border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-100 transition-all text-left"><div class="flex-1 overflow-hidden"><span class="text-sm bg-blue-500 text-white px-4 py-1 rounded-full font-black">みつけたよ！</span><p class="text-xl font-black text-gray-800 line-clamp-1 mt-2">${res.title}</p><div class="mt-2 text-lg font-black text-[#64B5F6]">${finalPages || "?"}ページ / ${finalPrice || "?"}円</div></div><span class="text-xl font-black text-blue-500">えらぶ</span></div>`;
+                applyToForm(res.title, res.author, finalPages, finalPrice);
+            } else {
+                la.innerHTML = `<p class="text-center py-6 text-xl text-gray-400 font-black">みつかりませんでした。</p>`;
+                applyToForm("", "", "", ""); 
+            }
         }
 
         function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
         function scanPageNumsDeeply(t) { return Array.from(t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1])); }
         function cleanAuthorName(s) { if (!s) return ""; let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; return p.filter(x => !p.some(o => o !== x && o.includes(x))).join('').trim(); }
-        function applyToForm(t, a, p, pr) { const ti = document.getElementById('input-title'); const au = document.getElementById('input-author'); const pa = document.getElementById('input-pages'); const prEl = document.getElementById('input-price'); if(ti) ti.value = t || ""; if(au) au.value = a || ""; if(pa) pa.value = p || ""; if(prEl) prEl.value = pr || ""; }
+        
+        function applyToForm(t, a, p, pr) {
+            const ti = document.getElementById('input-title'); const au = document.getElementById('input-author');
+            const pa = document.getElementById('input-pages'); const prEl = document.getElementById('input-price');
+            if(ti) ti.value = t || ""; if(au) au.value = a || ""; if(pa) pa.value = p || ""; if(prEl) prEl.value = pr || "";
+            clearError('title'); clearError('pages'); clearError('price');
+        }
+
         function clearError(t) { const el = document.getElementById('input-' + t); if(el) el.classList.remove('input-error'); }
         function showManualModal(isbn = "", auto = false) { document.getElementById('modal-overlay').classList.remove('hidden'); document.getElementById('input-isbn').value = isbn; }
         function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
         function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
-        function manualAddBook() { const t = document.getElementById('input-title').value.trim(); const p = document.getElementById('input-pages').value.trim(); const pr = document.getElementById('input-price').value.trim(); const a = document.getElementById('input-author').value.trim(); if(!t) { showNotice("なまえを いれてね"); return; } if(!p || p === "0" || !pr || pr === "0") { showNotice("かいていない ところが あるよ"); return; } logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() }); localStorage.setItem('reading_record_v167_logs', JSON.stringify(logs)); renderAll(); playBeep(); const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal(); }
-        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v167_logs', JSON.stringify(logs)); renderAll(); }
-        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v167_logs', JSON.stringify(logs)); renderAll(); } }
+        
+        function manualAddBook() {
+            const ti = document.getElementById('input-title');
+            const pa = document.getElementById('input-pages');
+            const pr = document.getElementById('input-price');
+            const au = document.getElementById('input-author');
+            if(!ti || !pa || !pr || !au) return;
+            const t = ti.value.trim(); const p = pa.value.trim(); const r = pr.value.trim(); const a = au.value.trim();
+            
+            if(!t) { ti.classList.add('input-error'); showNotice("なまえを いれてね"); return; }
+            if(!p || p === "0" || !r || r === "0") { 
+                if(!p || p === "0") pa.classList.add('input-error');
+                if(!r || r === "0") pr.classList.add('input-error');
+                showNotice("かいていない ところが あるよ"); return; 
+            }
+            
+            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: r, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
+            localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); playBeep();
+            const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); }
+            hideManualModal();
+        }
+
+        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); }
+        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); } }
         function showNotice(msg) { const bar = document.getElementById('notice-msg'); if(bar) { bar.innerText = msg + " [とじる]"; bar.classList.add('show'); setTimeout(() => bar.classList.remove('show'), 3000); } }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('nav-' + tab).classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
         function copyForSpreadsheet() { if (logs.length === 0) return; let tsv = "日付\tタイトル\t著者\tページ数\t値段\n"; [...logs].reverse().forEach(b => { tsv += `${b.date}\t${b.title}\t${b.author}\t${b.pages}\t${b.price}\n`; }); const ta = document.createElement("textarea"); ta.value = tsv; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showNotice("コピーしました！スプレッドシートに はりつけてね。"); }

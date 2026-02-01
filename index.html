@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>どくしょ　ちょきんばこ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
@@ -26,11 +26,14 @@
             width: 100%;
             max-width: 420px;
             height: 100vh;
+            /* スマホの時計表示やノッチと重ならないように上に余白を追加 */
+            padding-top: env(safe-area-inset-top, 15px);
             background-color: white;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
+            box-sizing: border-box;
         }
 
         /* --- カメラエリア --- */
@@ -129,6 +132,7 @@
 
         .nav-btn.active { color: #FF7043; background: #FFF0F0; border-top: 4px solid #FF7043; }
         
+        /* 貯金箱のわく */
         .chokin-box {
             background-color: white;
             padding: 6px 4px;
@@ -363,7 +367,7 @@
     <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70">
         <div class="bg-white w-full max-w-sm rounded-[2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl">
             <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
-            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1">
+            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1 text-left">
                 <div class="bg-[#E1F5FE] p-3 rounded-xl border border-[#4FC3F7]">
                     <p class="text-blue-600 mb-0.5 font-black text-sm">📸 ばーこーどを よむ</p>
                     <p class="text-[11px] font-medium leading-relaxed">ほんの うしろの 「しましま」に、あかい せんを あわせてね。</p>
@@ -429,12 +433,10 @@
         </div>
     </div>
 
-    <div id="notice-msg"></div>
-
     <script>
-        // --- 状態管理 ---
-        let logs = JSON.parse(localStorage.getItem('reading_record_v169_logs')) || [];
-        let goals = JSON.parse(localStorage.getItem('reading_record_v169_goals')) || {};
+        // --- 状態管理 (最新版) ---
+        let logs = JSON.parse(localStorage.getItem('reading_record_v170_logs')) || [];
+        let goals = JSON.parse(localStorage.getItem('reading_record_v170_goals')) || {};
         let isScannerRunning = false;
         let isProcessingBarcode = false;
         let lastCodes = [];
@@ -507,7 +509,7 @@
             const grid = document.getElementById('stamp-grid');
 
             if (goalInput) goalInput.value = goal;
-            if (monthTitle) monthTitle.innerText = `${month}月のスタンプ`;
+            if (monthTitle) monthTitle.innerText = `${month}月のスタンプ帳`;
             const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp); return d.getFullYear() === year && d.getMonth() + 1 === month; });
             const count = monthlyLogs.length;
             if (countText) countText.innerText = `${count} / ${goal}`;
@@ -523,11 +525,11 @@
             const mCountEl = document.getElementById('log-monthly-books');
             if(mCountEl) mCountEl.innerText = monthlyLogs.length;
             if (!list) return;
-            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold text-sm">📚 この月は まだ ありません</div>`; return; }
+            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold text-sm">📚 この月は まだ ありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
                 <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative">
                     <div class="flex-1 overflow-hidden">
-                        <div class="flex items-center gap-1.5 mb-0.5 text-left">
+                        <div class="flex items-center gap-1.5 mb-0.5 text-left text-left">
                            <span class="text-[8px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span>
                            <div class="font-black text-[#5D4037] text-xs whitespace-nowrap overflow-hidden text-ellipsis flex-1">${book.title}</div>
                         </div>
@@ -543,18 +545,18 @@
                 </div>`).join('');
         }
 
-        function updateGoal(val) { const { year, month } = getCurrentSelectedMonth(); goals[`${year}-${month}`] = parseInt(val) || 10; localStorage.setItem('reading_record_v169_goals', JSON.stringify(goals)); renderAll(); }
+        function updateGoal(val) { const { year, month } = getCurrentSelectedMonth(); goals[`${year}-${month}`] = parseInt(val) || 10; localStorage.setItem('reading_record_v170_goals', JSON.stringify(goals)); renderAll(); }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
         function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
-        function saveDataFile() { const data = { logs, goals, version: "v169" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップを ほぞんしました！"); }
-        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v169_goals', JSON.stringify(goals)); renderAll(); showNotice("データを ふくげんしました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
+        function saveDataFile() { const data = { logs, goals, version: "v170" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップを ほぞんしました！"); }
+        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v170_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v170_goals', JSON.stringify(goals)); renderAll(); showNotice("データを ふくげんしました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
         
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() { isScannerRunning = false; isProcessingBarcode = false; try { Quagga.stop(); } catch(e) {} document.querySelectorAll('video').forEach(v => { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.remove(); }); document.getElementById('btn-text').innerText = "バーコード"; document.getElementById('guide-box').classList.add('hidden'); document.getElementById('scanner-cover').classList.remove('hidden'); document.getElementById('success-overlay').style.display = "none"; const c = document.querySelector('#interactive canvas'); if (c) c.remove(); }
         async function startScanner() { if (isScannerRunning) return; applyToForm("", "", "", ""); document.getElementById('btn-text').innerText = "とめる"; try { Quagga.init({ inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { width: 1280, height: 720, facingMode: "environment" }, area: { top: "25%", bottom: "25%" } }, decoder: { readers: ["ean_reader"] }, frequency: 25, numOfWorkers: 4, locator: { patchSize: "medium", halfSample: true } }, (err) => { if (err) { stopScanner(); return; } Quagga.start(); isScannerRunning = true; document.getElementById('scanner-cover').classList.add('hidden'); document.getElementById('guide-box').classList.remove('hidden'); }); } catch (e) { stopScanner(); } }
         Quagga.onDetected(data => { const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13) return; isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; setTimeout(() => { showManualModal(code, true); searchBookData(code); stopScanner(); }, 200); });
 
-        // --- 核心：最強データ取得ロジック (復元) ---
+        // --- 最強データ取得ロジック (Google + OpenBD + NDL) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates'); 
             applyToForm("", "", "", ""); 
@@ -564,7 +566,6 @@
             let pageCandidates = [];
             let priceCandidates = [];
 
-            // 1. Google Books (全文紹介解析)
             const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
                 if (data.items && data.items.length > 0) {
                     const info = data.items[0].volumeInfo;
@@ -576,7 +577,6 @@
                 }
             }).catch(() => {});
 
-            // 2. openBD (ONIX詳細深層取得)
             const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => {
                 if (data && data[0]) {
                     const b = data[0].summary;
@@ -593,7 +593,6 @@
                 }
             }).catch(() => {});
 
-            // 3. NDL (記述解析復元)
             const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
                 const txt = await r.text();
                 const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item");
@@ -611,17 +610,13 @@
 
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
 
-            // 最大値を採用するロジック
             let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
             let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
 
             if (res.title) {
-                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="flex items-center gap-4 p-5 bg-blue-50 border-4 border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-100 transition-all text-left"><div class="flex-1 overflow-hidden"><span class="text-sm bg-blue-500 text-white px-4 py-1 rounded-full font-black">みつけたよ！</span><p class="text-xl font-black text-gray-800 line-clamp-1 mt-2">${res.title}</p><div class="mt-2 text-lg font-black text-[#64B5F6]">${finalPages || "?"}ページ / ${finalPrice || "?"}円</div></div><span class="text-xl font-black text-blue-500">えらぶ</span></div>`;
+                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="flex items-center gap-4 p-5 bg-blue-50 border-4 border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-100 transition-all text-left text-left"><div class="flex-1 overflow-hidden"><span class="text-sm bg-blue-500 text-white px-4 py-1 rounded-full font-black">みつけたよ！</span><p class="text-xl font-black text-gray-800 line-clamp-1 mt-2">${res.title}</p><div class="mt-2 text-lg font-black text-[#64B5F6]">${finalPages || "?"}ページ / ${finalPrice || "?"}円</div></div><span class="text-xl font-black text-blue-500">えらぶ</span></div>`;
                 applyToForm(res.title, res.author, finalPages, finalPrice);
-            } else {
-                la.innerHTML = `<p class="text-center py-6 text-xl text-gray-400 font-black">みつかりませんでした。</p>`;
-                applyToForm("", "", "", ""); 
-            }
+            } else { la.innerHTML = `<p class="text-center py-6 text-xl text-gray-400 font-black">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
         }
 
         function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
@@ -656,13 +651,13 @@
             }
             
             logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: r, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
-            localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); playBeep();
+            localStorage.setItem('reading_record_v170_logs', JSON.stringify(logs)); renderAll(); playBeep();
             const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); }
             hideManualModal();
         }
 
-        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); }
-        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v169_logs', JSON.stringify(logs)); renderAll(); } }
+        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v170_logs', JSON.stringify(logs)); renderAll(); }
+        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v170_logs', JSON.stringify(logs)); renderAll(); } }
         function showNotice(msg) { const bar = document.getElementById('notice-msg'); if(bar) { bar.innerText = msg + " [とじる]"; bar.classList.add('show'); setTimeout(() => bar.classList.remove('show'), 3000); } }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('nav-' + tab).classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
         function copyForSpreadsheet() { if (logs.length === 0) return; let tsv = "日付\tタイトル\t著者\tページ数\t値段\n"; [...logs].reverse().forEach(b => { tsv += `${b.date}\t${b.title}\t${b.author}\t${b.pages}\t${b.price}\n`; }); const ta = document.createElement("textarea"); ta.value = tsv; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showNotice("コピーしました！スプレッドシートに はりつけてね。"); }

@@ -240,7 +240,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ */
+        /* 通知メッセージ：初期状態を非表示・透明に設定 */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -250,7 +250,10 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        #notice-msg.show { 
+            transform: translateX(-50%) translateY(0); 
+            opacity: 1; visibility: visible; 
+        }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -458,15 +461,15 @@
         <div class="bg-white w-[95%] max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
-                <div class="p-3 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
-                    <label class="text-[10px] font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
+                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
+                    <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
                     <div class="flex gap-2 mt-1 items-stretch">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
                         <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-3 text-left">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
                     <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
                     <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
@@ -483,7 +486,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 pt-3 border-t-2 mt-2 shrink-0">
+            <div class="flex gap-3 pt-4 border-t-2 mt-2 shrink-0">
                 <button onclick="hideManualModal()" class="flex-1 py-3 text-gray-500 font-black text-lg hover:bg-gray-100 rounded-xl">やめる</button>
                 <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#0277BD]">きろく！</button>
             </div>
@@ -719,25 +722,22 @@
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const item = xmlDoc.getElementsByTagName("item")[0];
+                const item = xmlDoc.querySelector("item");
                 if (item) {
-                    const t = item.getElementsByTagName("title")[0]?.textContent;
-                    if (!res.title) res.title = t || "";
-                    
-                    const descNode = item.getElementsByTagName("description")[0];
-                    if (descNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(descNode.textContent));
-                    
-                    const extentNode = item.getElementsByTagName("extent")[0];
-                    if (extentNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extentNode.textContent));
-                    
-                    const priceNode = item.getElementsByTagName("price")[0];
-                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
+                    if (!res.title) res.title = item.querySelector("title")?.textContent;
+                    const desc = item.querySelector("description")?.textContent;
+                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    // extent (大きさ・容量) からページ数を抽出
+                    const extent = item.querySelector("extent")?.textContent;
+                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                    const priceText = item.querySelector("price")?.textContent;
+                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
                 }
             }).catch(() => {});
 
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
 
-            // 数字の選定 (大きい順にソートして最大値を採用)
+            // 候補の中から最も大きな数字を採用（-Infinity回避、0除外）
             const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             
@@ -776,27 +776,13 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // 強力なページ数スキャン（正規表現を大幅強化）
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 1. "123p", "123ページ", "123頁", "123枚"
-            const regex1 = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi;
-            // 2. "ページ数: 123", "Pages: 123"
-            const regex2 = /(?:ページ数|ページ|p|page|pages)[:：\s]*(\d{1,4})/gi;
-            
-            let match;
-            const results = [];
-            
-            while ((match = regex1.exec(text)) !== null) {
-                const num = parseInt(match[1]);
-                if (!isNaN(num) && num > 5) results.push(num);
-            }
-            while ((match = regex2.exec(text)) !== null) {
-                const num = parseInt(match[1]);
-                if (!isNaN(num) && num > 5) results.push(num);
-            }
-            return results;
+            // 数字のあとにページ、p、頁、枚が続くパターン、または「ページ数: 123」のようなパターンを抽出
+            const matches = Array.from(text.matchAll(/(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})|(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi));
+            // マッチしたグループ（1番目または2番目）から数字を取り出す
+            return matches.map(m => parseInt(m[1] || m[2])).filter(n => !isNaN(n) && n > 5);
         }
         
         function cleanAuthorName(s) { 

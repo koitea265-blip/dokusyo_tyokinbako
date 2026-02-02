@@ -43,7 +43,6 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            /* タイトル上の余白を10pxに変更（ノッチがある場合は自動調整） */
             padding-top: max(10px, env(safe-area-inset-top, 10px));
             border-left: 1px solid #EEE;
             border-right: 1px solid #EEE;
@@ -241,7 +240,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ：初期状態を非表示・透明に設定 */
+        /* 通知メッセージ */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -251,10 +250,7 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { 
-            transform: translateX(-50%) translateY(0); 
-            opacity: 1; visibility: visible; 
-        }
+        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -464,7 +460,7 @@
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
                 <div class="p-3 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-[10px] font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
-                    <div class="flex gap-1.5 mt-1 items-stretch">
+                    <div class="flex gap-2 mt-1 items-stretch">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
                         <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
                     </div>
@@ -487,7 +483,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 pt-3 border-t-2 mt-2 shrink-0 text-left">
+            <div class="flex gap-3 pt-3 border-t-2 mt-2 shrink-0">
                 <button onclick="hideManualModal()" class="flex-1 py-3 text-gray-500 font-black text-lg hover:bg-gray-100 rounded-xl">やめる</button>
                 <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#0277BD]">きろく！</button>
             </div>
@@ -670,7 +666,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 本の検索ロジック (最強のページ数・金額取得 徹底強化・完全復元版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底強化・完全復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -687,7 +683,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文もスキャン
+                    // 説明文の中からページ数を探す（最強ロジック）
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});
@@ -745,10 +741,11 @@
             const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             
+            // ページ数は最大のものを採用（本文＋あとがき等が反映されやすいため）
             let finalPages = validPages.length > 0 ? validPages[0].toString() : "";
             let finalPrice = validPrices.length > 0 ? validPrices[0].toString() : "";
             
-            // 未取得項目チェック
+            // 未取得項目を確認
             const missing = [];
             if (!res.title) missing.push('input-title');
             if (!finalPages) missing.push('input-pages');
@@ -762,7 +759,7 @@
                 </div>`;
                 applyToForm(res.title, res.author, finalPages, finalPrice);
                 
-                // エラー枠表示
+                // 未取得項目を赤枠にする
                 if (!finalPages) document.getElementById('input-pages').classList.add('input-error');
                 if (!finalPrice) document.getElementById('input-price').classList.add('input-error');
                 
@@ -779,15 +776,24 @@
             return isNaN(num) ? 0 : num;
         }
 
+        // 強力なページ数スキャン（正規表現を大幅強化）
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 数字＋ページ、p、頁、枚、または「ページ数：数字」のパターン
-            const regex = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)|(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})/gi;
+            // 1. "123p", "123ページ", "123頁", "123枚"
+            const regex1 = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi;
+            // 2. "ページ数: 123", "Pages: 123"
+            const regex2 = /(?:ページ数|ページ|p|page|pages)[:：\s]*(\d{1,4})/gi;
+            
             let match;
             const results = [];
-            while ((match = regex.exec(text)) !== null) {
-                const num = parseInt(match[1] || match[2]);
+            
+            while ((match = regex1.exec(text)) !== null) {
+                const num = parseInt(match[1]);
+                if (!isNaN(num) && num > 5) results.push(num);
+            }
+            while ((match = regex2.exec(text)) !== null) {
+                const num = parseInt(match[1]);
                 if (!isNaN(num) && num > 5) results.push(num);
             }
             return results;
@@ -795,7 +801,7 @@
         
         function cleanAuthorName(s) { 
             if (!s) return ""; 
-            // 修正済み：安全な正規表現
+            // 修正済み：正規表現のエラーを修正
             let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); 
             let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; 
             return p.filter(x => !p.some(o => o !== x && o.includes(x))).join(' ').trim(); 

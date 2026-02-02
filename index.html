@@ -18,28 +18,25 @@
             --text-main: #D84315;
         }
 
-        body {
-            font-family: 'Zen Maru Gothic', sans-serif;
-            background-color: var(--app-bg);
-            overscroll-behavior: none;
-            color: #4E342E;
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            position: fixed;
+            background-color: var(--app-bg);
+            color: #4E342E;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            -webkit-text-size-adjust: 100%;
         }
 
-        /* --- メインコンテナ（縦長固定） --- */
+        /* --- メインコンテナ（縦長固定・レスポンシブ対応） --- */
         .app-container {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             width: 100%;
             height: 100%;
-            /* 常にスマホ幅（最大420px）で中央表示 */
-            max-width: 420px;
+            max-width: 420px; /* 常にスマホ幅で固定 */
             margin: 0 auto;
             background-color: white;
             overflow: hidden;
@@ -83,16 +80,16 @@
         .tab-content.active { display: flex; flex-direction: column; }
         #tab-log, #tab-stamp { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-        /* ホーム画面のレイアウト（常に縦並び） */
+        /* ホーム画面レイアウト */
         #tab-home.active { 
             justify-content: stretch; 
             padding: 0;
             overflow-y: hidden;
             gap: 0;
-            flex-direction: column; 
+            flex-direction: column; /* 常に縦並び */
         }
 
-        /* セクション分割設定（常に上下50%） */
+        /* セクション分割設定 */
         .section-half {
             flex: 1;
             min-height: 0;
@@ -455,8 +452,8 @@
                 <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
                     <div class="flex gap-2 mt-1">
-                        <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
-                        <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
+                        <input type="text" id="input-isbn" placeholder="978..." class="flex-1 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-lg font-black">
+                        <button onclick="lookupISBNFromInput()" class="px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD]">さがす</button>
                     </div>
                 </div>
                 <div id="search-candidates"></div>
@@ -644,7 +641,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 最強の検索ロジック (ページ数・金額取得 完全強化版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -653,7 +650,7 @@
             let pageCandidates = [];
             let priceCandidates = [];
 
-            // 1. Google Books API (詳細スキャン)
+            // 1. Google Books API (詳細な説明文スキャン)
             const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
                 if (data.items && data.items.length > 0) {
                     const info = data.items[0].volumeInfo;
@@ -661,7 +658,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文もスキャン
+                    // 説明文の中からページ数を探す（最強ロジック）
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});
@@ -697,33 +694,28 @@
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const items = xmlDoc.getElementsByTagName("item"); // 修正：より確実に要素を取得
-                if (items.length > 0) {
-                    const item = items[0];
-                    const t = item.getElementsByTagName("title")[0]?.textContent;
-                    if (!res.title) res.title = t || "";
-                    
-                    const desc = item.getElementsByTagName("description")[0]?.textContent;
+                const item = xmlDoc.querySelector("item");
+                if (item) {
+                    if (!res.title) res.title = item.querySelector("title")?.textContent;
+                    const desc = item.querySelector("description")?.textContent;
                     if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
-                    
                     // extent (大きさ・容量) からページ数を抽出
-                    const extent = item.getElementsByTagName("extent")[0]?.textContent;
+                    const extent = item.querySelector("extent")?.textContent;
                     if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
-                    
-                    const priceNode = item.getElementsByTagName("price")[0];
-                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
+                    const priceText = item.querySelector("price")?.textContent;
+                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
                 }
             }).catch(() => {});
 
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
 
             // 候補の中から最も大きな数字を採用（-Infinity回避、0除外）
-            const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0);
-            const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0);
+            const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
+            const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             
             // ページ数は最大のものを採用（本文＋あとがき等が反映されやすいため）
-            let finalPages = validPages.length > 0 ? Math.max(...validPages).toString() : "";
-            let finalPrice = validPrices.length > 0 ? Math.max(...validPrices).toString() : "";
+            let finalPages = validPages.length > 0 ? validPages[0].toString() : "";
+            let finalPrice = validPrices.length > 0 ? validPrices[0].toString() : "";
             
             // 未取得項目を確認
             const missing = [];

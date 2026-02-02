@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>どくしょ　ちょきんばこ</title>
+    <!-- ライブラリの読み込み -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -31,7 +32,7 @@
             position: fixed;
         }
 
-        /* --- メインコンテナ --- */
+        /* --- コンテナ設定 --- */
         .app-container {
             width: 100%;
             max-width: 420px;
@@ -46,14 +47,12 @@
             padding-top: max(35px, env(safe-area-inset-top, 35px));
         }
 
-        /* --- ヘッダー --- */
         header {
             background: var(--header-gradient);
             padding: 0.35rem 0.75rem;
             text-align: center;
             flex-shrink: 0;
             border-bottom: 3px solid var(--border-color);
-            box-shadow: 0 2px 10px rgba(216, 67, 21, 0.1);
         }
 
         .fancy-title {
@@ -74,11 +73,9 @@
             60% { transform: translateY(-4px) rotate(5deg); }
         }
 
-        /* --- タブレイアウト --- */
+        /* --- タブ管理 --- */
         .tab-content { display: none; height: 100%; overflow: hidden; }
         .tab-content.active { display: flex; flex-direction: column; }
-        
-        /* リストとスタンプ帳は中身が多ければスクロールする */
         #tab-log, #tab-stamp { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
         #tab-home.active { 
@@ -88,7 +85,7 @@
             gap: 0;
         }
 
-        /* 1:1 分割 */
+        /* 50%：50% 分割（Chromebook対応） */
         .section-half {
             height: 50%;
             min-height: 0;
@@ -99,7 +96,7 @@
             overflow: hidden;
         }
 
-        /* 貯金箱エリア */
+        /* --- 貯金箱カード --- */
         .chokin-card {
             background-color: #FFF3E0;
             border-radius: 1rem;
@@ -132,6 +129,7 @@
             justify-content: center;
             min-height: 0;
             padding: 2px 4px;
+            overflow: hidden;
         }
 
         .chokin-label { 
@@ -157,10 +155,11 @@
         .btn-clear {
             display: flex; align-items: center; justify-content: center; gap: 4px;
             border-radius: 0.5rem; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.1s;
         }
         .btn-clear:active { transform: scale(0.97); }
 
-        /* --- カメラエリア --- */
+        /* --- カメラ --- */
         #interactive.viewport {
             position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden;
             border-radius: 0.8rem; background-color: #E3F2FD; display: flex;
@@ -170,27 +169,28 @@
         #scanner-cover { position: absolute; inset: 0; background-color: #E1F5FE; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
         #success-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
 
-        /* --- ナビゲーション --- */
         .nav-btn.active { color: #FF7043; background: #FFF0F0; border-top: 4px solid #FF7043; }
 
-        /* --- スタンプ・リスト共通 --- */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* --- リスト・スタンプ画面装飾 --- */
+        .unified-header-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
+            padding: 0.3rem 0.6rem; background: white; border-radius: 0.8rem; border: 2px solid #FFCCBC;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-wrap: nowrap; white-space: nowrap; flex-shrink: 0;
+        }
+        .unified-summary-box { display: flex; align-items: center; gap: 2px; padding-left: 0.4rem; border-left: 2px solid #FFAB91; }
+        .list-guide-msg {
+            background-color: #FFF9C4; color: #795548; font-size: 10px; font-weight: 900;
+            text-align: center; padding: 4px; border-radius: 6px; margin-top: 4px; border: 1px dashed #FFD54F;
+        }
         .date-selectors { display: flex; gap: 0.2rem; align-items: center; flex-wrap: nowrap; justify-content: center; }
-        
         select {
             appearance: none; background-color: white; border: 2px solid #FFAB91; border-radius: 6px;
             padding: 1px 6px; font-weight: bold; color: #D84315; font-size: 12px; outline: none; cursor: pointer;
         }
-
         .goal-input {
-            width: 38px; text-align: center; font-weight: 900;
-            color: #FF7043; font-size: 1rem;
-            background: #FFF; border: 2px solid #FFAB91;
-            border-radius: 6px; outline: none;
-            padding: 1px 0;
+            width: 38px; text-align: center; font-weight: 900; color: #FF7043; font-size: 1rem;
+            background: #FFF; border: 2px solid #FFAB91; border-radius: 6px; outline: none; padding: 1px 0;
         }
-
         .stamp-grid {
             display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
             background-color: white; padding: 5px; border-radius: 0.7rem; border: 2px solid #FFCCBC;
@@ -201,41 +201,8 @@
             background-color: #FFFAF0; overflow: hidden;
         }
         .stamp-cell.filled { border-style: solid; background-color: #FFF0F0; animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-        #notice-msg {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(62, 39, 35, 0.95); color: white;
-            padding: 10px; font-size: 14px; text-align: center; font-weight: bold;
-            z-index: 1000; transition: transform 0.3s ease; transform: translateY(100%);
-        }
-        #notice-msg.show { transform: translateY(0); }
-
-        .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; text-align: center; margin-bottom: 0.2rem; }
+        .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
-
-        /* 見出し行の一体化 */
-        .unified-header-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.4rem;
-            padding: 0.3rem 0.6rem;
-            background: white;
-            border-radius: 0.8rem;
-            border: 2px solid #FFCCBC;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            flex-wrap: nowrap;
-            white-space: nowrap;
-            flex-shrink: 0; /* ヘッダーがスクロールで消えないように固定 */
-        }
-
-        .unified-summary-box {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding-left: 0.4rem;
-            border-left: 2px solid #FFAB91;
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -252,7 +219,11 @@
         <main id="tab-home" class="tab-content active flex-1">
             <div class="section-half">
                 <div class="chokin-card">
-                    <h3 class="section-title-top">いままでによんだほんのちょきん</h3>
+                    <div class="flex justify-between items-center mb-1 shrink-0 px-1">
+                        <h3 class="section-title-top">いままでによんだほんのちょきん</h3>
+                        <button onclick="showResetConfirm()" class="px-2 py-0.5 bg-white border border-red-400 rounded-full text-[8px] font-black text-red-500 active:scale-95 shadow-sm">♻️ リセット</button>
+                    </div>
+                    
                     <div class="chokin-grid">
                         <div class="chokin-box">
                             <span class="chokin-label">よんだ本のかず</span>
@@ -282,8 +253,8 @@
                             📊 表(ひょう)にするためのコピー
                         </button>
                         <div class="flex gap-1">
-                            <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#8D6E63] text-white text-[9px]">💾 データをのこす(保存)</button>
-                            <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#A1887F] text-white text-[9px]">📖 のこしたデータをよむ</button>
+                            <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(保存)</button>
+                            <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2]">📖 のこしたデータをよむ</button>
                         </div>
                         <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
                     </div>
@@ -293,7 +264,7 @@
             <div class="section-half">
                 <div class="bg-[#E1F5FE] rounded-[1rem] p-2 border-2 border-dashed border-[#4FC3F7] flex flex-col relative flex-1 min-h-0">
                     <div class="flex w-full justify-between items-center mb-1 shrink-0">
-                        <p class="text-[9px] font-black text-[#0288D1]">「バーコード」か「入力」をえらんでね</p>
+                        <p class="text-[9px] font-black text-[#0288D1]">「バーコード」か「いれる」をえらんでね</p>
                         <button onclick="showHelp()" class="px-2 py-0.5 bg-white border border-[#4FC3F7] rounded-full text-[8px] font-black text-[#0288D1] active:scale-95 shadow-sm">❓ つかいかた</button>
                     </div>
 
@@ -320,7 +291,7 @@
                         </button>
                         <button onclick="showManualModal('')" class="flex-[1] h-11 bg-white border-2 border-[#29B6F6] text-[#0277BD] rounded-[0.8rem] flex flex-col items-center justify-center active:scale-95 min-w-[65px] shadow-sm leading-tight">
                             <span class="text-base">🔢</span>
-                            <span class="text-[9px] font-black">本のばんごうを入力する</span>
+                            <span class="text-[10px] font-black">本のばんごうをいれる</span>
                         </button>
                     </div>
                 </div>
@@ -329,7 +300,6 @@
 
         <!-- 【リスト】 -->
         <main id="tab-log" class="tab-content flex-1 p-3 gap-1 no-scrollbar overflow-y-auto">
-            <!-- 1行にまとめた見出し -->
             <div class="unified-header-row shrink-0">
                 <div class="date-selectors">
                     <select id="year-selector-log" onchange="syncDateAndRender(this.value, 'year')"></select>
@@ -340,9 +310,8 @@
                     <span class="text-base font-black text-[#E64A19]"><span id="log-monthly-books">0</span><span class="text-[10px] ml-0.5">さつ</span></span>
                 </div>
             </div>
-            
+            <div class="list-guide-msg">まちがえたときは「❌」をおすと けせるよ</div>
             <div id="log-month-header" class="current-date-title"></div>
-            <!-- リスト本体 -->
             <div id="book-list" class="space-y-1 mt-1 pb-4"></div>
         </main>
 
@@ -359,9 +328,7 @@
                     <span class="text-[10px] font-black text-[#8D6E63]">さつ</span>
                 </div>
             </div>
-
             <div id="stamp-month-header" class="current-date-title"></div>
-
             <div class="bg-white rounded-xl p-2 border-2 border-[#FFCCBC] shadow-sm mt-1">
                 <div class="flex justify-between items-center mb-1 px-1">
                     <h2 class="font-black text-sm text-[#D84315]" id="stamp-month-title">スタンプ帳</h2>
@@ -389,12 +356,44 @@
         </nav>
     </div>
 
-    <!-- 検索モーダル -->
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left">
+    <!-- モーダル系 -->
+    <div id="reset-confirm-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[700] bg-black/80">
+        <div class="bg-white w-full max-w-sm rounded-[1.5rem] p-6 border-4 border-red-200 shadow-2xl text-center">
+            <p class="text-4xl mb-4">⚠️</p>
+            <h3 class="text-xl font-black text-red-600 mb-4 leading-relaxed">データをけします<br>ほんとうにいいですか</h3>
+            <div class="flex gap-3">
+                <button onclick="hideResetConfirm()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-lg">やめる</button>
+                <button onclick="resetAllDataActual()" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-black text-lg shadow border-b-4 border-red-700">けす！</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70 text-left text-left text-left text-left">
+        <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl overflow-hidden">
+            <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
+            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1">
+                <div class="bg-[#E1F5FE] p-2.5 rounded-xl border border-[#4FC3F7]">
+                    <p class="text-blue-600 mb-0.5 font-black text-sm">📸 バーコードをよむ</p>
+                    <p class="text-[11px] font-medium leading-relaxed">本のうしろのバーコードに赤い線をあわせてね。</p>
+                </div>
+                <div class="bg-[#FFF9C4] p-2.5 rounded-xl border border-[#FFF176]">
+                    <p class="text-yellow-700 mb-0.5 font-black text-sm">❌ きろくをけす</p>
+                    <p class="text-[11px] font-medium leading-relaxed">リストの画面で「❌」をおすと、まちがえたきろくを消せるよ。</p>
+                </div>
+                <div class="bg-[#D1C4E9] p-2.5 rounded-xl border border-[#9575CD]">
+                    <p class="text-[#4527A0] mb-0.5 font-black text-sm">💾 データをのこす</p>
+                    <p class="text-[11px] font-medium leading-relaxed">保存しておけば、スマホをかえても続きからできるよ！</p>
+                </div>
+            </div>
+            <button onclick="hideHelp()" class="mt-4 w-full py-3 bg-[#FF7043] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#E64A19]">わかった！</button>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left text-left text-left text-left text-left">
         <div class="bg-white w-full max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center">🔎 本のばんごうで さがす</h3>
-            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left">
-                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
+            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left text-left text-left text-left text-left">🔎 本のばんごうで さがす</h3>
+            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left text-left text-left">
+                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left text-left text-left text-left text-left">
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
                     <div class="flex gap-2 mt-1">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-lg font-black">
@@ -402,12 +401,12 @@
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-4">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left text-left text-left text-left text-left">
                     <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
                     <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
                     <input type="text" id="input-author" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 text-left text-left text-left text-left text-left text-left">
                         <div class="flex-1">
                             <label class="text-[10px] font-black text-gray-400">ページ</label>
                             <input type="number" id="input-pages" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
@@ -436,24 +435,23 @@
     <div id="notice-msg"></div>
 
     <script>
+        // --- 状態管理 ---
         const STORAGE_KEY_LOGS = 'reading_record_main_v1_logs';
         const STORAGE_KEY_GOALS = 'reading_record_main_v1_goals';
         
         let logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
         let goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
-        let isScannerRunning = false;
-        let isProcessingBarcode = false;
-        let selectedYear = new Date().getFullYear();
-        let selectedMonth = new Date().getMonth() + 1;
+        let isScannerRunning = false, isProcessingBarcode = false;
+        let selectedYear = new Date().getFullYear(), selectedMonth = new Date().getMonth() + 1;
 
-        const STAMPS = { 1: "🎍", 2: "👹", 3: "🌸", 4: "🎒", 5: "🎏", 6: "☔", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
+        // 月別スタンプ：2月=雪, 6月=あじさい
+        const STAMPS = { 1: "🎍", 2: "❄️", 3: "🌸", 4: "🎒", 5: "🎏", 6: "💠", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep() {
             try {
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
                 osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
@@ -467,9 +465,7 @@
         function initDateSelectors() {
             const yLog = document.getElementById('year-selector-log'), yStamp = document.getElementById('year-selector-stamp');
             const mLog = document.getElementById('month-selector-log'), mStamp = document.getElementById('month-selector-stamp');
-            const currentYear = new Date().getFullYear();
-            const years = [];
-            for(let i = 2020; i <= currentYear + 16; i++) years.push(i);
+            const years = []; for(let i = 2020; i <= new Date().getFullYear() + 16; i++) years.push(i);
             years.reverse(); 
             if(yLog && yStamp) [yLog, yStamp].forEach(sel => { sel.innerHTML = ""; years.forEach(y => sel.add(new Option(`${y}年`, y))); sel.value = selectedYear; });
             if(mLog && mStamp) [mLog, mStamp].forEach(sel => { sel.innerHTML = ""; for(let i=1; i<=12; i++) sel.add(new Option(`${i}月`, i)); sel.value = selectedMonth; });
@@ -481,10 +477,7 @@
             renderAll();
         }
 
-        function renderAll() { 
-            if (!Array.isArray(logs)) logs = [];
-            renderChokinBako(); renderStampPage(); renderBookList(); 
-        }
+        function renderAll() { if (!Array.isArray(logs)) logs = []; renderChokinBako(); renderStampPage(); renderBookList(); }
 
         function renderChokinBako() {
             const tbc = document.getElementById('total-books-count'), tpr = document.getElementById('total-price-count'), tpa = document.getElementById('total-pages-count');
@@ -496,64 +489,65 @@
         function renderStampPage() {
             const key = `${selectedYear}-${selectedMonth}`, goal = goals[key] || 10;
             const countText = document.getElementById('stamp-count-text'), progress = document.getElementById('goal-progress'), grid = document.getElementById('stamp-grid');
-            const targetEl = document.getElementById('target-goal-input'), headEl = document.getElementById('stamp-month-header');
-
-            if(targetEl) targetEl.value = goal;
-            if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
-
-            const monthlyLogs = logs.filter(l => { 
-                if (!l) return false;
-                const d = new Date(l.timestamp || l.date); 
-                return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; 
-            });
+            document.getElementById('target-goal-input').value = goal;
+            document.getElementById('stamp-month-header').innerText = `${selectedYear}年 ${selectedMonth}月`;
+            const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
             const count = monthlyLogs.length;
             if (countText) countText.innerText = `${count} / ${goal}`;
             if (progress) progress.style.width = Math.min(100, (count / goal) * 100) + "%";
-            if (grid) { 
-                grid.innerHTML = ""; const icon = STAMPS[selectedMonth] || "💮"; 
-                for (let i = 0; i < 36; i++) { 
-                    const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); 
-                    if (i < count) cell.innerText = icon; grid.appendChild(cell); 
-                } 
-            }
+            if (grid) { grid.innerHTML = ""; const icon = STAMPS[selectedMonth] || "💮"; for (let i = 0; i < 36; i++) { const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); if (i < count) cell.innerText = icon; grid.appendChild(cell); } }
         }
 
         function renderBookList() {
             const list = document.getElementById('book-list'), headEl = document.getElementById('log-month-header');
             if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
-
-            const monthlyLogs = logs.filter(l => { 
-                if (!l) return false;
-                const d = new Date(l.timestamp || l.date); 
-                return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; 
-            });
-            const monBooksEl = document.getElementById('log-monthly-books');
-            if(monBooksEl) monBooksEl.innerText = monthlyLogs.length;
+            const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
+            document.getElementById('log-monthly-books').innerText = monthlyLogs.length;
             if (!list) return;
-            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月の記録はありません</div>`; return; }
-            
+            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
                 <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative text-left">
-                    <div class="flex-1 overflow-hidden">
+                    <div class="flex-1 overflow-hidden text-left">
                         <div class="flex items-center gap-1.5 mb-0.5"><span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span>
                         <div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
                         <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div>
                     </div>
                     <div class="flex flex-col items-end gap-0.5 shrink-0">
-                        <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[10px] p-0.5">❌</button>
+                        <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[12px] p-1 font-bold">❌</button>
                         <div class="flex gap-0.5">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
                     </div>
                 </div>`).join('');
         }
 
+        function deleteEntry(id) { if (confirm("この きろくを けしても いいですか？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); showNotice("けしました"); } }
+        function showResetConfirm() { document.getElementById('reset-confirm-modal').classList.remove('hidden'); }
+        function hideResetConfirm() { document.getElementById('reset-confirm-modal').classList.add('hidden'); }
+        function resetAllDataActual() { localStorage.removeItem(STORAGE_KEY_LOGS); localStorage.removeItem(STORAGE_KEY_GOALS); logs = []; goals = {}; renderAll(); hideResetConfirm(); showNotice("すべてリセットしました"); }
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function showNotice(msg) { const bar = document.getElementById('notice-msg'); if(bar) { bar.innerText = msg + " [とじる]"; bar.classList.add('show'); setTimeout(() => bar.classList.remove('show'), 3000); } }
-        function switchTab(tab) { 
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); 
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); 
-            const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active');
-            if (tab !== 'home') stopScanner(); renderAll(); 
+        function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
+
+        // --- 本の検索 (ページ数取得復活コード: 重要) ---
+        async function searchBookData(isbn) {
+            const la = document.getElementById('search-candidates'); la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
+            let res = { title: "", author: "", price: "" }; let pageCandidates = [], priceCandidates = [];
+            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items?.[0]) { const info = data.items[0].volumeInfo; res.title = info.title; res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount)); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
+            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data?.[0]) { const b = data[0].summary, onix = data[0].onix; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); try { const exts = onix?.DescriptiveDetail?.Extent; if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); }); } catch(e) {} } }).catch(() => {});
+            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(), items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc)); const extent = item.querySelector("extent")?.textContent; if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent)); const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr)); } }).catch(() => {});
+            await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
+            let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
+            let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
+            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1 text-left">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } 
+            else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
         }
+
+        function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
+        function scanPageNumsDeeply(t) { return Array.from(t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1])); }
+        function cleanAuthorName(s) { if (!s) return ""; let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; return p.filter(x => !p.some(o => o !== x && o.includes(x))).join('').trim(); }
+        function applyToForm(t, a, p, pr) { document.getElementById('input-title').value = t || ""; document.getElementById('input-author').value = a || ""; document.getElementById('input-pages').value = p || ""; document.getElementById('input-price').value = pr || ""; }
+        function showManualModal(isbn = "") { document.getElementById('modal-overlay').classList.remove('hidden'); document.getElementById('input-isbn').value = isbn; }
+        function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
+        function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
 
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() {
@@ -578,35 +572,6 @@
                 });
             } catch (e) { stopScanner(); }
         }
-        
-        if(typeof Quagga !== 'undefined') {
-            Quagga.onDetected(data => { 
-                const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13 || code.startsWith('192')) return;
-                isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; 
-                setTimeout(() => { showManualModal(code, true); searchBookData(code); stopScanner(); }, 200); 
-            });
-        }
-
-        async function searchBookData(isbn) {
-            const la = document.getElementById('search-candidates'); la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
-            let res = { title: "", author: "", price: "" }; let pageCandidates = [], priceCandidates = [];
-            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items && data.items.length > 0) { const info = data.items[0].volumeInfo; res.title = info.title; res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount)); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data && data[0]) { const b = data[0].summary, onix = data[0].onix; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); try { const exts = onix?.DescriptiveDetail?.Extent; if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); }); } catch(e) {} } }).catch(() => {});
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(); const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc)); const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr)); } }).catch(() => {});
-            await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
-            let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
-            let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
-            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1 text-left">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } 
-            else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
-        }
-
-        function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
-        function scanPageNumsDeeply(t) { return Array.from(t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1])); }
-        function cleanAuthorName(s) { if (!s) return ""; let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; return p.filter(x => !p.some(o => o !== x && o.includes(x))).join('').trim(); }
-        function applyToForm(t, a, p, pr) { document.getElementById('input-title').value = t || ""; document.getElementById('input-author').value = a || ""; document.getElementById('input-pages').value = p || ""; document.getElementById('input-price').value = pr || ""; }
-        function showManualModal(isbn = "", auto = false) { document.getElementById('modal-overlay').classList.remove('hidden'); document.getElementById('input-isbn').value = isbn; }
-        function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
-        function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
 
         function copyForSpreadsheet() {
             if (logs.length === 0) return;
@@ -631,7 +596,6 @@
             const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal();
         }
         function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); }
-        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); } }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
         function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
     </script>

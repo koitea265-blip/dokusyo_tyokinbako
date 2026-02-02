@@ -32,19 +32,23 @@
             position: fixed;
         }
 
-        /* --- メインコンテナ --- */
+        /* --- メインコンテナ（縦長固定） --- */
         .app-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             width: 100%;
-            max-width: 420px;
             height: 100%;
+            /* 常にスマホ幅（最大420px）で中央表示 */
+            max-width: 420px;
             margin: 0 auto;
             background-color: white;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative;
             box-sizing: border-box;
             padding-top: max(35px, env(safe-area-inset-top, 35px));
+            border-left: 1px solid #EEE;
+            border-right: 1px solid #EEE;
         }
 
         header {
@@ -79,22 +83,26 @@
         .tab-content.active { display: flex; flex-direction: column; }
         #tab-log, #tab-stamp { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
+        /* ホーム画面のレイアウト（常に縦並び） */
         #tab-home.active { 
             justify-content: stretch; 
             padding: 0;
             overflow-y: hidden;
             gap: 0;
+            flex-direction: column; 
         }
 
-        /* 1:1 分割設定 */
+        /* セクション分割設定（常に上下50%） */
         .section-half {
-            height: 50%;
+            flex: 1;
             min-height: 0;
             display: flex;
             flex-direction: column;
             padding: 0.35rem;
             box-sizing: border-box;
             overflow: hidden;
+            height: 50%;
+            width: 100%;
         }
 
         /* --- 貯金箱エリア --- */
@@ -150,8 +158,8 @@
             margin-top: -2px;
             margin-bottom: 4px;
         }
-        .chokin-value { font-size: clamp(24px, 4.5vh, 34px); font-weight: 900; color: #E64A19; line-height: 1; }
-        .chokin-unit { font-size: clamp(11px, 1.6vh, 13px); font-weight: 900; color: #8D6E63; }
+        .chokin-value { font-size: clamp(24px, 4.5vh, 46px); font-weight: 900; color: #E64A19; line-height: 1; }
+        .chokin-unit { font-size: clamp(11px, 1.6vh, 16px); font-weight: 900; color: #8D6E63; }
 
         .home-action-buttons {
             flex-shrink: 0;
@@ -178,6 +186,7 @@
         #scanner-cover { position: absolute; inset: 0; background-color: #E1F5FE; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
         #success-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
 
+        /* スキャン用ガイド */
         .scan-frame {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; height: 60%; z-index: 30; pointer-events: none;
@@ -234,7 +243,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ */
+        /* 通知メッセージ：初期状態を非表示・透明に設定 */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -244,7 +253,10 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        #notice-msg.show { 
+            transform: translateX(-50%) translateY(0); 
+            opacity: 1; visibility: visible; 
+        }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -253,6 +265,7 @@
 <body oncontextmenu="return false;">
 
     <div class="app-container">
+        
         <header>
             <h1 class="fancy-title flex items-center justify-center gap-3 leading-none">
                 <span class="text-3xl bounce-icon">📖</span> どくしょ　ちょきんばこ
@@ -318,7 +331,6 @@
                                 <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 7a2 2 0 10-4 0 2 2 0 004 0zm2 0a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
                         </div>
-                        <!-- ガイド枠と赤い線 -->
                         <div id="guide-box" class="scan-frame hidden">
                             <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
                             <div class="scan-corner bl"></div><div class="scan-corner br"></div>
@@ -435,14 +447,14 @@
         </div>
     </div>
 
-    <!-- 検索モーダル (スマホ最適化済み・横並び維持) -->
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-2 z-[500] bg-black/60 text-left">
-        <div class="bg-white w-[95%] max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- 検索モーダル -->
+    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left">
+        <div class="bg-white w-full max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
                 <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
-                    <div class="flex gap-2 mt-1 items-stretch">
+                    <div class="flex gap-2 mt-1">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
                         <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
                     </div>
@@ -559,9 +571,9 @@
                         <div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
                         <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div>
                     </div>
-                    <div class="flex flex-col items-end gap-0.5 shrink-0">
+                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left">
                         <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[12px] p-1 font-bold">❌</button>
-                        <div class="flex gap-0.5">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
+                        <div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
                     </div>
                 </div>`).join('');
         }
@@ -632,7 +644,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 最強の検索ロジック (ページ数・金額取得 徹底復元・強化版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 完全強化版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -641,7 +653,7 @@
             let pageCandidates = [];
             let priceCandidates = [];
 
-            // 1. Google Books API (詳細な説明文スキャン)
+            // 1. Google Books API (詳細スキャン)
             const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
                 if (data.items && data.items.length > 0) {
                     const info = data.items[0].volumeInfo;
@@ -649,7 +661,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文の中からページ数を探す（最強ロジック）
+                    // 説明文もスキャン
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});
@@ -680,21 +692,26 @@
                 }
             }).catch(() => {});
 
-            // 3. NDL (国立国会図書館)
+            // 3. NDL (国立国会図書館) - 取得ロジック強化
             const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const item = xmlDoc.querySelector("item");
-                if (item) {
-                    if (!res.title) res.title = item.querySelector("title")?.textContent;
-                    const desc = item.querySelector("description")?.textContent;
+                const items = xmlDoc.getElementsByTagName("item"); // 修正：より確実に要素を取得
+                if (items.length > 0) {
+                    const item = items[0];
+                    const t = item.getElementsByTagName("title")[0]?.textContent;
+                    if (!res.title) res.title = t || "";
+                    
+                    const desc = item.getElementsByTagName("description")[0]?.textContent;
                     if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    
                     // extent (大きさ・容量) からページ数を抽出
-                    const extent = item.querySelector("extent")?.textContent;
+                    const extent = item.getElementsByTagName("extent")[0]?.textContent;
                     if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
-                    const priceText = item.querySelector("price")?.textContent;
-                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
+                    
+                    const priceNode = item.getElementsByTagName("price")[0];
+                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
                 }
             }).catch(() => {});
 

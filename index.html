@@ -53,6 +53,7 @@
             text-align: center;
             flex-shrink: 0;
             border-bottom: 3px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(216, 67, 21, 0.1);
         }
 
         .fancy-title {
@@ -129,8 +130,10 @@
             justify-content: center;
             min-height: 0;
             padding: 2px 4px;
+            overflow: hidden;
         }
 
+        /* 文字サイズを画面の高さに合わせて可変調整 */
         .chokin-label { 
             font-size: clamp(12px, 2.2vh, 15px); 
             font-weight: 900; 
@@ -240,6 +243,19 @@
             background-color: #FFFAF0; overflow: hidden;
         }
         .stamp-cell.filled { border-style: solid; background-color: #FFF0F0; animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        #notice-msg {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(62, 39, 35, 0.95); color: white;
+            padding: 10px; font-size: 14px; text-align: center; font-weight: bold;
+            z-index: 1000; transition: transform 0.3s ease;
+            transform: translateY(100%);
+        }
+        #notice-msg.show { transform: translateY(0); }
+
+        .section-title-top {
+            font-size: 0.8rem; font-weight: 900; color: #E65100; text-align: center; margin-bottom: 0.2rem;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -255,10 +271,10 @@
         <!-- 【ホーム】 -->
         <main id="tab-home" class="tab-content active flex-1">
             
-            <!-- ① 貯金箱エリア -->
+            <!-- ① 貯金箱エリア (50%) -->
             <div class="section-half">
                 <div class="chokin-card">
-                    <h3 class="text-[0.8rem] font-black text-[#E65100] text-center mb-1 shrink-0">いままでによんだほんのちょきん</h3>
+                    <h3 class="section-title-top">いままでによんだほんのちょきん</h3>
                     
                     <div class="chokin-grid">
                         <div class="chokin-box">
@@ -284,7 +300,7 @@
                         </div>
                     </div>
 
-                    <!-- 下部操作ボタン：スッキリと配置 -->
+                    <!-- 下部操作ボタン：役割を明確化 -->
                     <div class="home-action-buttons">
                         <button onclick="copyForSpreadsheet()" class="btn-clear w-full py-1 bg-[#4CAF50] text-white text-[10px] border-b-2 border-[#2E7D32]">
                             📊 表(ひょう)にするためのコピー
@@ -298,7 +314,7 @@
                 </div>
             </div>
 
-            <!-- ② カメラ・入力エリア -->
+            <!-- ② カメラ・入力エリア (50%) -->
             <div class="section-half">
                 <div class="bg-[#E1F5FE] rounded-[1rem] p-2 border-2 border-dashed border-[#4FC3F7] flex flex-col relative flex-1 min-h-0">
                     
@@ -323,7 +339,6 @@
                         </div>
                     </div>
                     
-                    <!-- 修正された分かりやすいボタン -->
                     <div class="flex w-full gap-2 mt-2 shrink-0">
                         <button onclick="toggleScanner()" class="flex-[1] h-11 bg-[#29B6F6] hover:bg-[#039BE5] text-white rounded-[0.8rem] font-black text-[12px] shadow border-b-4 border-[#0277BD] flex flex-col items-center justify-center leading-tight">
                             <span class="text-base">📷</span> 
@@ -362,11 +377,11 @@
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
                     <div class="flex gap-2 mt-1">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-lg font-black">
-                        <button onclick="lookupISBNFromInput()" class="px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm">さがす</button>
+                        <button onclick="lookupISBNFromInput()" class="px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD]">さがす</button>
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-4">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
                     <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
                     <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
@@ -400,9 +415,9 @@
     <div id="notice-msg"></div>
 
     <script>
-        // --- 状態管理 (最新版) ---
-        let logs = JSON.parse(localStorage.getItem('reading_record_v186_logs')) || [];
-        let goals = JSON.parse(localStorage.getItem('reading_record_v186_goals')) || {};
+        // --- 状態管理 ---
+        let logs = JSON.parse(localStorage.getItem('reading_record_v187_logs')) || [];
+        let goals = JSON.parse(localStorage.getItem('reading_record_v187_goals')) || {};
         let isScannerRunning = false;
         let isProcessingBarcode = false;
         let selectedYear = new Date().getFullYear();
@@ -477,18 +492,18 @@
             if (!list) return;
             if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-10 text-gray-400 font-bold text-xs text-center">📚 記録はありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
-                <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative">
-                    <div class="flex-1 overflow-hidden text-left"><div class="flex items-center gap-1.5 mb-0.5"><span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span><div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
-                    <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div></div>
-                    <div class="flex flex-col items-end gap-0.5 shrink-0"><button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[8px] p-0.5">❌</button><div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div></div>
+                <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative text-left">
+                    <div class="flex-1 overflow-hidden text-left"><div class="flex items-center gap-1.5 mb-0.5 text-left"><span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0 text-left">${book.date.split('/')[2]}日</span><div class="font-black text-[#4E342E] text-[10px] truncate flex-1 text-left">${book.title}</div></div>
+                    <div class="flex items-center gap-2 text-[8px] text-gray-400 text-left"><div class="truncate flex-1 text-left">${book.author}</div><div class="text-[#29B6F6] font-black text-left">${book.pages}p / ${book.price}円</div></div></div>
+                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left"><button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[8px] p-0.5 text-left">❌</button><div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div></div>
                 </div>`).join('');
         }
 
-        function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem('reading_record_v186_goals', JSON.stringify(goals)); renderAll(); }
+        function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem('reading_record_v187_goals', JSON.stringify(goals)); renderAll(); }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
         function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
-        function saveDataFile() { const data = { logs, goals, version: "v186" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); showNotice("バックアップしました！"); }
-        function loadDataFile(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = (e) => { try { const d = JSON.parse(e.target.result); if (d.logs && d.goals) { logs = d.logs; goals = d.goals; localStorage.setItem('reading_record_v186_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v186_goals', JSON.stringify(goals)); renderAll(); showNotice("復元しました！"); } } catch (err) { showNotice("しっぱいしました"); } }; r.readAsText(f); input.value = ""; }
+        function saveDataFile() { const data = { logs, goals, version: "v187" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); showNotice("バックアップしました！"); }
+        function loadDataFile(input) { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = (e) => { try { const d = JSON.parse(e.target.result); if (d.logs && d.goals) { logs = d.logs; goals = d.goals; localStorage.setItem('reading_record_v187_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v187_goals', JSON.stringify(goals)); renderAll(); showNotice("復元しました！"); } } catch (err) { showNotice("しっぱいしました"); } }; r.readAsText(f); input.value = ""; }
         
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() {
@@ -505,7 +520,7 @@
             const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
             try {
                 Quagga.init({
-                    inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "10%", bottom: "10%" } },
+                    inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "15%", bottom: "15%" } },
                     decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }
                 }, (err) => {
                     if (err) { stopScanner(); showNotice("カメラが使えません。"); return; }
@@ -526,12 +541,21 @@
             const la = document.getElementById('search-candidates'); la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
             let res = { title: "", author: "", price: "" }; let pageCandidates = [], priceCandidates = [];
             const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items && data.items.length > 0) { const info = data.items[0].volumeInfo; res.title = info.title; res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount)); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data && data[0]) { const b = data[0].summary; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); } }).catch(() => {});
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(); const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr)); } }).catch(() => {});
+            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data && data[0]) { 
+                const b = data[0].summary; const onix = data[0].onix; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); 
+                try { const exts = onix?.DescriptiveDetail?.Extent; if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); }); } catch(e) {}
+            } }).catch(() => {});
+            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(); const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { 
+                const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; 
+                const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                const extent = item.querySelector("extent")?.textContent; if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr));
+            } }).catch(() => {});
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
             let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
             let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
-            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
+            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1 text-left">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } 
+            else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
         }
 
         function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
@@ -562,11 +586,11 @@
             if(!t) { showNotice("なまえを いれてね"); return; }
             if(!p || p === "0" || !pr || pr === "0") { showNotice("あいているところを かいてね"); return; }
             logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
-            localStorage.setItem('reading_record_v186_logs', JSON.stringify(logs)); renderAll(); playBeep();
+            localStorage.setItem('reading_record_v187_logs', JSON.stringify(logs)); renderAll(); playBeep();
             const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal();
         }
-        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v186_logs', JSON.stringify(logs)); renderAll(); }
-        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v186_logs', JSON.stringify(logs)); renderAll(); } }
+        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v187_logs', JSON.stringify(logs)); renderAll(); }
+        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v187_logs', JSON.stringify(logs)); renderAll(); } }
         function showNotice(msg) { const bar = document.getElementById('notice-msg'); if(bar) { bar.innerText = msg + " [とじる]"; bar.classList.add('show'); setTimeout(() => bar.classList.remove('show'), 3000); } }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('nav-' + tab).classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
     </script>

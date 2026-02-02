@@ -9,58 +9,92 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --app-bg: #FFFAF0;
+            --header-bg: #FFCCBC;
+            --header-gradient: linear-gradient(180deg, #FFCCBC 0%, #FFAB91 100%);
+            --border-color: #FFAB91;
+            --text-main: #D84315;
+        }
+
         body {
             font-family: 'Zen Maru Gothic', sans-serif;
-            background-color: #FFFAF0;
+            background-color: var(--app-bg);
             overscroll-behavior: none;
             color: #4E342E;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            position: fixed;
         }
 
         /* --- メインコンテナ --- */
         .app-container {
             width: 100%;
             max-width: 420px;
-            height: 100vh;
+            height: 100%;
+            margin: 0 auto;
             background-color: white;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
             box-sizing: border-box;
-            /* スマホの時計表示を避けるための上部余白 */
-            padding-top: max(25px, env(safe-area-inset-top, 25px));
+            /* スマホの上部ステータスバー回避用 */
+            padding-top: max(35px, env(safe-area-inset-top, 35px));
         }
 
-        /* --- ヘッダー --- */
+        /* --- ヘッダー：華やかなタイトル --- */
         header {
-            background-color: #FFCCBC;
-            padding-bottom: 0.5rem;
-            padding-top: 0.5rem;
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
+            background: var(--header-gradient);
+            padding: 0.4rem 0.75rem;
             text-align: center;
             flex-shrink: 0;
-            border-bottom: 3px solid #FFAB91;
+            border-bottom: 3px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(216, 67, 21, 0.1);
         }
 
-        /* --- カメラエリア：Chromebookでもスクロールしないよう高さを抑える --- */
+        .fancy-title {
+            font-size: 1.6rem;
+            color: var(--text-main);
+            font-weight: 900;
+            text-shadow: 
+                2px 2px 0px white,
+                -1px -1px 0px white,
+                1px -1px 0px white,
+                -1px 1px 0px white,
+                3px 3px 5px rgba(216, 67, 21, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        .bounce-icon {
+            display: inline-block;
+            animation: welcome-bounce 1s ease-out 1;
+        }
+
+        @keyframes welcome-bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px) rotate(-5deg); }
+            60% { transform: translateY(-4px) rotate(5deg); }
+        }
+
+        /* --- カメラビューポート --- */
         #interactive.viewport {
             position: relative;
             width: 100%;
-            height: 130px; 
+            height: 100%;
+            min-height: 0;
             overflow: hidden;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             background-color: #E3F2FD;
             display: flex;
             justify-content: center;
             align-items: center;
-            border: 3px solid #FFF;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid #FFF;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
         }
 
         #interactive.viewport video {
@@ -94,33 +128,30 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 85%; height: 65%;
+            width: 80%; height: 60%;
             z-index: 30;
             pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .scan-corner {
             position: absolute;
-            width: 15px; height: 15px;
+            width: 10px; height: 10px;
             border-color: #FF5252;
             border-style: solid;
             border-width: 0;
         }
-        .tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
-        .tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
-        .bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
-        .br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
+        .tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 3px 0 0 0; }
+        .tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 3px 0 0; }
+        .bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 3px; }
+        .br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 3px 0; }
 
         .scan-line {
             position: absolute;
             top: 50%; left: 0; width: 100%; height: 2px;
             background-color: #FF1744;
-            box-shadow: 0 0 6px #FF1744;
+            box-shadow: 0 0 4px #FF1744;
             z-index: 31;
-            animation: scan-move 1.5s infinite ease-in-out;
+            animation: scan-move 2s infinite ease-in-out;
         }
         @keyframes scan-move {
             0% { top: 20%; opacity: 0.3; }
@@ -137,61 +168,117 @@
         }
 
         /* --- タブレイアウト --- */
-        .tab-content { display: none; height: 100%; overflow-y: auto; }
-        .tab-content.active { display: flex; flex-direction: column; justify-content: flex-start; }
+        .tab-content { display: none; height: 100%; overflow: hidden; }
+        .tab-content.active { display: flex; flex-direction: column; }
         
-        #tab-home.active { justify-content: flex-start; overflow-y: hidden; }
+        #tab-log, #tab-stamp { overflow-y: auto; }
+
+        #tab-home.active { 
+            justify-content: stretch; 
+            padding: 0;
+            overflow-y: hidden;
+            gap: 0;
+        }
 
         .nav-btn.active { color: #FF7043; background: #FFF0F0; border-top: 4px solid #FF7043; }
         
-        /* 貯金箱のわく */
+        /* 貯金箱エリアを優先確保(58%)、カメラをさらにコンパクト化(42%) */
+        .section-chokin {
+            flex: 1.15;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 0.4rem;
+            box-sizing: border-box;
+        }
+        .section-camera {
+            flex: 0.85;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 0.4rem;
+            box-sizing: border-box;
+        }
+
+        .chokin-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            height: 100%;
+        }
+
         .chokin-box {
+            flex: 1;
             background-color: white;
-            padding: 6px 4px;
-            border-radius: 1rem;
-            border: 3px solid #FFB74D;
+            padding: 2px 8px;
+            border-radius: 0.8rem;
+            border: 2px solid #FFB74D;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .chokin-label { font-size: 10px; font-weight: 900; color: #5D4037; margin-bottom: 0px; text-align: center; }
-        .chokin-value { font-size: 20px; font-weight: 900; color: #E64A19; line-height: 1; }
-        .chokin-unit { font-size: 9px; font-weight: bold; color: #8D6E63; margin-top: 1px; }
+        .chokin-label { 
+            font-size: 15px; 
+            font-weight: 900; 
+            color: #5D4037; 
+            line-height: 1; 
+            margin-bottom: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .chokin-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        .chokin-value { 
+            font-size: 34px; 
+            font-weight: 900; 
+            color: #E64A19; 
+            line-height: 1; 
+        }
+        .chokin-unit { 
+            font-size: 15px; 
+            font-weight: 900; 
+            color: #8D6E63; 
+        }
 
         .goal-input {
-            width: 50px; text-align: center; font-weight: 900;
-            color: #FF7043; font-size: 1.1rem;
+            width: 40px; text-align: center; font-weight: 900;
+            color: #FF7043; font-size: 0.9rem;
             background: #FFF; border: 2px solid #FFAB91;
-            border-radius: 8px; outline: none;
+            border-radius: 6px; outline: none;
         }
 
         .stamp-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 4px;
+            gap: 3px;
             background-color: white;
-            padding: 8px;
-            border-radius: 0.8rem;
+            padding: 5px;
+            border-radius: 0.7rem;
             border: 2px solid #FFCCBC;
         }
         .stamp-cell {
             aspect-ratio: 1;
             border: 1px dashed #FFCCBC;
-            border-radius: 0.4rem;
+            border-radius: 0.3rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 34px; 
+            line-height: 1;
             background-color: #FFFAF0;
+            overflow: hidden;
         }
         .stamp-cell.filled { border-style: solid; background-color: #FFF0F0; animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         #notice-msg {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(62, 39, 35, 0.95); color: white;
-            padding: 12px; font-size: 14px; text-align: center; font-weight: bold;
+            padding: 10px; font-size: 14px; text-align: center; font-weight: bold;
             z-index: 1000; transition: transform 0.3s ease;
             transform: translateY(100%);
         }
@@ -200,133 +287,158 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
+        .date-selectors {
+            display: flex;
+            gap: 0.4rem;
+            width: 100%;
+            justify-content: center;
+        }
+
         select {
             appearance: none;
             background-color: white;
             border: 2px solid #FFAB91;
-            border-radius: 10px;
-            padding: 4px 12px;
+            border-radius: 8px;
+            padding: 2px 8px;
             font-weight: bold;
             color: #D84315;
+            font-size: 12px;
             outline: none;
             cursor: pointer;
         }
 
-        .section-title {
-            font-size: 1rem;
+        .section-title-top {
+            font-size: 0.85rem;
             font-weight: 900;
             color: #E65100;
             text-align: center;
-            margin-bottom: 0.3rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-bottom: 0.2rem;
         }
         
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; }
+
+        /* ボタン用：高さを抑えて分かりやすく */
+        .btn-clear {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-radius: 0.6rem;
+            font-weight: 900;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            transition: all 0.1s;
+        }
+        .btn-clear:active { transform: scale(0.96); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <div class="app-container">
         
+        <!-- ヘッダー -->
         <header>
-            <h1 class="text-xl font-black text-[#D84315] flex items-center justify-center gap-2 leading-none">
-                <span class="text-2xl">📖</span> どくしょ　ちょきんばこ
+            <h1 class="fancy-title flex items-center justify-center gap-3 leading-none">
+                <span class="text-3xl bounce-icon">📖</span> どくしょ　ちょきんばこ
             </h1>
         </header>
 
         <!-- 【ホーム】 -->
-        <main id="tab-home" class="tab-content active flex-1 p-2 gap-1.5 overflow-hidden">
+        <main id="tab-home" class="tab-content active flex-1">
             
-            <!-- ① ちょきんエリア -->
-            <div class="bg-[#FFF3E0] rounded-[1.2rem] p-2 border-2 border-[#FFB74D] shadow-sm shrink-0">
-                <h3 class="section-title">いままでによんだほんのちょきん</h3>
-                <div class="flex flex-col gap-1">
-                    <div class="flex gap-1.5 w-full">
-                        <div class="chokin-box flex-1 border-2">
-                            <span class="chokin-label leading-tight">本のかず</span>
-                            <span class="chokin-value" id="total-books-count">0</span>
-                            <span class="chokin-unit">さつ</span>
+            <!-- ① 貯金箱エリア (58%) -->
+            <div class="section-chokin">
+                <div class="bg-[#FFF3E0] rounded-[1rem] p-2 border-2 border-[#FFB74D] shadow-sm flex-1 flex flex-col">
+                    <h3 class="section-title-top">いままでによんだほんのちょきん</h3>
+                    <div class="chokin-container flex-1 mb-1.5">
+                        <div class="chokin-box">
+                            <span class="chokin-label">よんだ本のかず</span>
+                            <div class="chokin-value-row">
+                                <span class="chokin-value" id="total-books-count">0</span>
+                                <span class="chokin-unit">さつ</span>
+                            </div>
                         </div>
-                        <div class="chokin-box flex-1 border-2">
-                            <span class="chokin-label leading-tight">ぺーじのごうけい</span>
-                            <span class="chokin-value" id="total-pages-count">0</span>
-                            <span class="chokin-unit">ページ</span>
+                        <div class="chokin-box">
+                            <span class="chokin-label">よんだページのごうけい</span>
+                            <div class="chokin-value-row">
+                                <span class="chokin-value" id="total-pages-count">0</span>
+                                <span class="chokin-unit">ページ</span>
+                            </div>
+                        </div>
+                        <div class="chokin-box">
+                            <span class="chokin-label">よんだ本のごうけいきんがく</span>
+                            <div class="chokin-value-row">
+                                <span class="chokin-value" id="total-price-count">0</span>
+                                <span class="chokin-unit">えん</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="chokin-box w-full py-1 border-2">
-                        <span class="chokin-label">よんだ本のねだんのごうけい</span>
-                        <div class="flex items-baseline gap-1 text-center justify-center">
-                            <span class="chokin-value text-xl" id="total-price-count">0</span>
-                            <span class="chokin-unit">えん</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="flex flex-wrap gap-1 mt-2">
-                    <button onclick="copyForSpreadsheet()" class="w-full py-1.5 bg-[#4CAF50] text-white rounded-lg font-black text-[10px] shadow active:scale-95 flex items-center justify-center gap-1 border-b-2 border-[#2E7D32]">
-                        <span>📊</span> スプレッドシートに コピー
-                    </button>
-                    <div class="flex gap-1.5 w-full">
-                        <button onclick="saveDataFile()" class="flex-1 py-1 bg-[#8D6E63] text-white rounded-md text-[8px] font-bold shadow active:scale-95">💾 ほぞん</button>
-                        <button onclick="document.getElementById('file-input').click()" class="flex-1 py-1 bg-[#A1887F] text-white rounded-md text-[8px] font-bold shadow active:scale-95">📖 よむ</button>
+                    <!-- 操作ボタン：役割を明確化 -->
+                    <div class="flex flex-col gap-1 shrink-0">
+                        <button onclick="copyForSpreadsheet()" class="btn-clear w-full py-1 bg-[#4CAF50] text-white text-[10px] border-b-2 border-[#2E7D32]">
+                            📊 表(ひょう)にするためのコピー
+                        </button>
+                        <div class="flex gap-1">
+                            <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#8D6E63] text-white text-[9px]">💾 データをのこす(保存)</button>
+                            <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#A1887F] text-white text-[9px]">📖 のこしたデータをよむ</button>
+                        </div>
+                        <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
                     </div>
-                    <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
                 </div>
             </div>
 
-            <!-- ② カメラエリア -->
-            <div class="bg-[#E1F5FE] rounded-[1.2rem] p-2 border-2 border-dashed border-[#4FC3F7] flex flex-col items-center relative shadow-sm shrink-0">
-                
-                <button onclick="showHelp()" class="self-end mb-1 px-2 py-1 bg-white border-2 border-[#4FC3F7] rounded-full text-[8px] font-black text-[#0288D1] shadow-sm active:scale-95 flex items-center gap-1">
-                    <span>❓</span> アプリの つかいかた
-                </button>
+            <!-- ② カメラエリア (42%) -->
+            <div class="section-camera">
+                <div class="bg-[#E1F5FE] rounded-[1rem] p-2 border-2 border-dashed border-[#4FC3F7] flex flex-col relative flex-1 min-h-0">
+                    
+                    <div class="flex w-full justify-between items-center mb-1 shrink-0">
+                        <p class="text-[9px] font-black text-[#0288D1]">「バーコード」をおしてね</p>
+                        <button onclick="showHelp()" class="px-2 py-0.5 bg-white border border-[#4FC3F7] rounded-full text-[8px] font-black text-[#0288D1] shadow-sm">❓ つかいかた</button>
+                    </div>
 
-                <div id="interactive" class="viewport mb-2 shadow-sm relative">
-                    <div id="scanner-cover">
-                        <svg class="w-8 h-8 text-blue-300 mb-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 7a2 2 0 10-4 0 2 2 0 004 0zm2 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        <p class="font-black text-[#0288D1] text-[10px] text-center leading-tight">「バーコード」をおしてね！</p>
+                    <div id="interactive" class="viewport shadow-sm relative flex-1">
+                        <div id="scanner-cover">
+                            <svg class="w-8 h-8 text-blue-300 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 7a2 2 0 10-4 0 2 2 0 004 0zm2 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                        </div>
+                        <div id="guide-box" class="scan-frame hidden">
+                            <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
+                            <div class="scan-corner bl"></div><div class="scan-corner br"></div>
+                            <div class="scan-line"></div>
+                        </div>
+                        <div id="success-overlay">
+                            <div class="text-3xl animate-bounce">✅</div>
+                            <p class="font-bold text-blue-600 text-xs">よめました！</p>
+                        </div>
                     </div>
-                    <div id="guide-box" class="scan-frame hidden">
-                        <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
-                        <div class="scan-corner bl"></div><div class="scan-corner br"></div>
-                        <div class="scan-line"></div>
+                    
+                    <div class="flex w-full gap-2 mt-2 shrink-0">
+                        <button onclick="toggleScanner()" class="flex-1 h-10 bg-[#29B6F6] hover:bg-[#039BE5] text-white rounded-[0.8rem] font-black text-sm shadow border-b-4 border-[#0277BD]">
+                            📷 <span id="btn-text">バーコード</span>
+                        </button>
+                        <button onclick="showManualModal('')" class="h-10 px-2 bg-white border-2 border-[#29B6F6] text-[#0277BD] rounded-[0.8rem] flex flex-col items-center justify-center active:scale-95 min-w-[65px] shadow-sm">
+                            <span class="text-lg leading-none">🔢</span>
+                            <span class="text-[8px] font-black">ばんごう</span>
+                        </button>
                     </div>
-                    <div id="success-overlay">
-                        <div class="text-3xl animate-bounce">✅</div>
-                        <p class="font-bold text-blue-600 text-xs">よめました！</p>
-                    </div>
-                </div>
-                
-                <div class="flex w-full gap-2">
-                    <button onclick="toggleScanner()" class="flex-1 h-10 bg-[#29B6F6] hover:bg-[#039BE5] text-white rounded-[0.8rem] font-black text-sm shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 border-b-4 border-[#0277BD]">
-                        <span class="text-lg">📷</span>
-                        <span id="btn-text">バーコード</span>
-                    </button>
-                    <button onclick="showManualModal('')" class="h-10 px-2 bg-white border-2 border-[#29B6F6] text-[#0277BD] rounded-[0.8rem] flex flex-col items-center justify-center shadow-sm active:scale-95 min-w-[60px]">
-                        <span class="text-base mb-0.5">🔢</span>
-                        <span class="text-[8px] font-black leading-none">ばんごう</span>
-                    </button>
                 </div>
             </div>
 
         </main>
 
         <!-- 【リスト】 -->
-        <main id="tab-log" class="tab-content flex-1 p-3 gap-2 no-scrollbar overflow-y-auto">
-            <div class="bg-white rounded-2xl p-2 border-2 border-[#FFCCBC] shadow-sm flex flex-col items-center gap-1 shrink-0">
+        <main id="tab-log" class="tab-content flex-1 p-3 gap-2 no-scrollbar">
+            <div class="bg-white rounded-xl p-2 border-2 border-[#FFCCBC] shadow-sm flex flex-col items-center shrink-0">
                 <h2 class="font-black text-[#5D4037] text-xs">📚 ほんを みる月</h2>
-                <select id="month-selector-log" onchange="syncMonthAndRender(this.value)" class="w-full text-center text-xs py-1"></select>
-            </div>
-            <div class="flex items-center justify-between px-1 shrink-0">
-                <h3 class="font-black text-[#E65100] text-base" id="log-month-title">月のリスト</h3>
+                <div class="date-selectors">
+                    <select id="year-selector-log" onchange="syncDateAndRender(this.value, 'year')"></select>
+                    <select id="month-selector-log" onchange="syncDateAndRender(this.value, 'month')"></select>
+                </div>
             </div>
             <div id="monthly-summary" class="shrink-0">
-                <div class="w-full bg-white p-2 rounded-lg border-2 border-[#FFCCBC] text-center">
-                    <span class="text-[10px] text-gray-400 font-bold">この月に よんだ かず：</span>
+                <div class="w-full bg-white p-1.5 rounded-lg border border-[#FFCCBC] text-center">
+                    <span class="text-[10px] text-gray-400 font-bold">この月の数：</span>
                     <span class="text-lg font-black text-[#E64A19]"><span id="log-monthly-books">0</span><span class="text-xs ml-0.5">さつ</span></span>
                 </div>
             </div>
@@ -334,21 +446,24 @@
         </main>
 
         <!-- 【スタンプ】 -->
-        <main id="tab-stamp" class="tab-content flex-1 p-3 gap-2 no-scrollbar overflow-y-auto">
-            <div class="bg-white rounded-2xl p-2 border-2 border-[#FFCCBC] shadow-sm text-center shrink-0">
+        <main id="tab-stamp" class="tab-content flex-1 p-3 gap-2 no-scrollbar">
+            <div class="bg-white rounded-xl p-2 border-2 border-[#FFCCBC] shadow-sm text-center shrink-0">
                 <div class="flex items-center justify-center gap-2 mb-1">
-                    <span class="font-black text-sm text-[#5D4037]">もくひょう：</span>
+                    <span class="font-black text-xs text-[#5D4037]">もくひょう：</span>
                     <input type="number" id="target-goal-input" class="goal-input" value="10" onchange="updateGoal(this.value)">
-                    <span class="text-base font-black text-[#8D6E63]">さつ</span>
+                    <span class="text-sm font-black text-[#8D6E63]">さつ</span>
                 </div>
-                <select id="month-selector-stamp" onchange="syncMonthAndRender(this.value)" class="text-xs w-full text-center"></select>
+                <div class="date-selectors">
+                    <select id="year-selector-stamp" onchange="syncDateAndRender(this.value, 'year')"></select>
+                    <select id="month-selector-stamp" onchange="syncDateAndRender(this.value, 'month')"></select>
+                </div>
             </div>
-            <div class="bg-white rounded-2xl p-2 border-2 border-[#FFCCBC] shadow-sm">
+            <div class="bg-white rounded-xl p-2 border-2 border-[#FFCCBC] shadow-sm">
                 <div class="flex justify-between items-center mb-1 px-1">
                     <h2 class="font-black text-sm text-[#D84315]" id="stamp-month-title">スタンプ帳</h2>
                     <span class="text-[10px] font-black text-gray-400" id="stamp-count-text">0 / 36</span>
                 </div>
-                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200 shadow-inner mb-2">
+                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200 mb-2">
                     <div id="goal-progress" class="bg-gradient-to-r from-[#FFAB91] to-[#FF7043] h-full transition-all duration-700" style="width: 0%"></div>
                 </div>
                 <div id="goal-markers" class="flex justify-between text-[9px] text-[#8D6E63] font-black px-1 mb-2"></div>
@@ -357,42 +472,38 @@
         </main>
 
         <!-- ナビゲーション -->
-        <nav class="bg-white border-t-2 border-[#FFCCBC] h-16 shrink-0 flex items-center justify-around pb-1">
+        <nav class="bg-white border-t-2 border-[#FFCCBC] h-14 shrink-0 flex items-center justify-around pb-1">
             <button onclick="switchTab('home')" id="nav-home" class="nav-btn active flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-2xl">🏠</span>
+                <span class="text-xl">🏠</span>
                 <span class="text-[9px] font-black">ホーム</span>
             </button>
             <button onclick="switchTab('log')" id="nav-log" class="nav-btn flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-2xl">📚</span>
+                <span class="text-xl">📚</span>
                 <span class="text-[9px] font-black">リスト</span>
             </button>
             <button onclick="switchTab('stamp')" id="nav-stamp" class="nav-btn flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-2xl">💮</span>
+                <span class="text-xl">💮</span>
                 <span class="text-[9px] font-black">スタンプ</span>
             </button>
         </nav>
     </div>
 
-    <!-- ヘルプモーダル -->
-    <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl">
+    <!-- モーダル・検索・ロジック -->
+    <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70 text-left">
+        <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl">
             <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
-            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1 text-left">
-                <div class="bg-[#E1F5FE] p-3 rounded-xl border border-[#4FC3F7]">
-                    <p class="text-blue-600 mb-0.5 font-black text-sm">📸 ばーこーどを よむ</p>
-                    <p class="text-[11px] font-medium leading-relaxed text-left">ほんの うしろの 「しましま」に、あかい せんを あわせてね。</p>
+            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1">
+                <div class="bg-[#E1F5FE] p-2.5 rounded-xl border border-[#4FC3F7]">
+                    <p class="text-blue-600 mb-0.5 font-black text-sm">📸 ばーこーど</p>
+                    <p class="text-[11px] font-medium text-left leading-relaxed">ほんの うしろの 「しましま」に、あかい せんを あわせてね。</p>
                 </div>
-                <div class="bg-[#FFF9C4] p-3 rounded-xl border border-[#FFF176]">
-                    <p class="text-yellow-700 mb-0.5 font-black text-sm">🔢 ばんごうで いれる</p>
-                    <p class="text-[11px] font-medium leading-relaxed text-left">13けたの すうじを いれて ほんを さがせるよ。</p>
+                <div class="bg-[#FFF9C4] p-2.5 rounded-xl border border-[#FFF176]">
+                    <p class="text-yellow-700 mb-0.5 font-black text-sm">🔢 ばんごう</p>
+                    <p class="text-[11px] font-medium text-left leading-relaxed">13けたの すうじを いれて ほんを さがせるよ。</p>
                 </div>
-                <div class="bg-[#C8E6C9] p-3 rounded-xl border border-[#81C784]">
-                    <p class="text-[#2E7D32] mb-0.5 font-black text-sm">📊 こぴー</p>
-                    <p class="text-[11px] font-medium leading-relaxed text-left">よんだ ほんを、ぱそこんの 「すぷれっどしーと」に はりつけられる ように、文字を こぴー するよ。</p>
-                </div>
-                <div class="bg-[#D1C4E9] p-3 rounded-xl border border-[#9575CD]">
+                <div class="bg-[#D1C4E9] p-2.5 rounded-xl border border-[#9575CD]">
                     <p class="text-[#4527A0] mb-0.5 font-black text-sm">💾 ほぞんと よむ</p>
-                    <p class="text-[11px] font-medium leading-relaxed text-left">きろくを ファイルにして ほぞん したり、もとに もどしたり できるよ。</p>
+                    <p class="text-[11px] font-medium text-left leading-relaxed">2020ねんから ずっと きろくを のこせるよ！データを ほぞんしておけば つづきから できるよ！</p>
                 </div>
             </div>
             <button onclick="hideHelp()" class="mt-4 w-full py-3 bg-[#FF7043] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#E64A19]">わかった！</button>
@@ -400,10 +511,10 @@
     </div>
 
     <!-- 検索モーダル -->
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-5 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <h3 class="text-xl font-black text-[#0288D1] mb-3 text-center">🔎 ほんを さがす</h3>
-            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left">
+    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left">
+        <div class="bg-white w-full max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center">🔎 ほんを さがす</h3>
+            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left">
                 <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">バーコードの すうじ</label>
                     <div class="flex gap-2 mt-1">
@@ -412,18 +523,18 @@
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4">
                     <label class="text-[10px] font-black text-gray-400 ml-1">本の なまえ</label>
                     <input type="text" id="input-title" oninput="clearError('title')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400 ml-1">かいた ひと</label>
                     <input type="text" id="input-author" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
-                    <div class="flex gap-3 text-left">
-                        <div class="flex-1 text-left">
-                            <label class="text-[10px] font-black text-gray-400 ml-1 text-left">ページ</label>
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-black text-gray-400 ml-1">ページ</label>
                             <input type="number" id="input-pages" oninput="clearError('pages')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
-                        <div class="flex-1 text-left">
-                            <label class="text-[10px] font-black text-gray-400 ml-1 text-left">ねだん</label>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-black text-gray-400 ml-1">ねだん</label>
                             <input type="number" id="input-price" oninput="clearError('price')" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
                     </div>
@@ -431,7 +542,7 @@
             </div>
             <div class="flex gap-3 pt-4 border-t-2 mt-2 shrink-0">
                 <button onclick="hideManualModal()" class="flex-1 py-3 text-gray-500 font-black text-lg hover:bg-gray-100 rounded-xl">やめる</button>
-                <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow-md border-b-4 border-[#0277BD]">きろく！</button>
+                <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#0277BD]">きろく！</button>
             </div>
         </div>
     </div>
@@ -439,17 +550,21 @@
     <div id="celebration" class="fixed inset-0 pointer-events-none z-[1000] flex items-center justify-center hidden">
         <div class="bg-white/95 p-10 rounded-[3rem] shadow-2xl text-center border-4 border-[#FF7043] animate-bounce">
             <p class="text-7xl mb-4">🎉</p>
-            <h2 class="text-2xl font-black text-[#FF5722]">きろく したよ！</h2>
+            <h2 class="text-xl font-black text-[#FF5722]">きろく したよ！</h2>
         </div>
     </div>
 
+    <div id="notice-msg"></div>
+
     <script>
-        // --- 状態管理 (最新版) ---
-        let logs = JSON.parse(localStorage.getItem('reading_record_v173_logs')) || [];
-        let goals = JSON.parse(localStorage.getItem('reading_record_v173_goals')) || {};
+        // --- 状態管理 ---
+        let logs = JSON.parse(localStorage.getItem('reading_record_v179_logs')) || [];
+        let goals = JSON.parse(localStorage.getItem('reading_record_v179_goals')) || {};
         let isScannerRunning = false;
         let isProcessingBarcode = false;
-        let lastCodes = [];
+        
+        let selectedYear = new Date().getFullYear();
+        let selectedMonth = new Date().getMonth() + 1;
 
         const STAMPS = { 1: "🎍", 2: "👹", 3: "🌸", 4: "🎒", 5: "🎏", 6: "☔", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
 
@@ -467,33 +582,32 @@
             } catch(e) {}
         }
 
-        window.onload = () => { initMonthSelectors(); renderAll(); };
+        window.onload = () => { initDateSelectors(); renderAll(); };
 
-        function initMonthSelectors() {
-            const selectors = [document.getElementById('month-selector-log'), document.getElementById('month-selector-stamp')];
-            const now = new Date();
-            const options = [];
-            for (let i = 0; i < 12; i++) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const val = `${d.getFullYear()}-${d.getMonth() + 1}`;
-                const text = `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
-                options.push({ val, text });
+        function initDateSelectors() {
+            const yLog = document.getElementById('year-selector-log');
+            const yStamp = document.getElementById('year-selector-stamp');
+            const mLog = document.getElementById('month-selector-log');
+            const mStamp = document.getElementById('month-selector-stamp');
+            const currentYear = new Date().getFullYear();
+            const years = [];
+            for(let i = 2020; i <= currentYear + 16; i++) years.push(i);
+            years.reverse(); 
+            [yLog, yStamp].forEach(sel => { if (!sel) return; sel.innerHTML = ""; years.forEach(y => sel.add(new Option(`${y}年`, y))); sel.value = selectedYear; });
+            [mLog, mStamp].forEach(sel => { if (!sel) return; sel.innerHTML = ""; for(let i=1; i<=12; i++) sel.add(new Option(`${i}月`, i)); sel.value = selectedMonth; });
+        }
+
+        function syncDateAndRender(val, type) {
+            if (type === 'year') {
+                selectedYear = parseInt(val);
+                document.getElementById('year-selector-log').value = val;
+                document.getElementById('year-selector-stamp').value = val;
+            } else {
+                selectedMonth = parseInt(val);
+                document.getElementById('month-selector-log').value = val;
+                document.getElementById('month-selector-stamp').value = val;
             }
-            selectors.forEach(sel => { if (!sel) return; sel.innerHTML = ""; options.forEach(opt => sel.add(new Option(opt.text, opt.val))); });
-        }
-
-        function syncMonthAndRender(val) {
-            const selLog = document.getElementById('month-selector-log');
-            const selStamp = document.getElementById('month-selector-stamp');
-            if(selLog) selLog.value = val; if(selStamp) selStamp.value = val;
             renderAll();
-        }
-
-        function getCurrentSelectedMonth() {
-            const sel = document.getElementById('month-selector-log');
-            const val = sel ? sel.value : `${new Date().getFullYear()}-${new Date().getMonth() + 1}`;
-            const parts = val.split('-');
-            return { year: parseInt(parts[0]), month: parseInt(parts[1]) };
         }
 
         function renderAll() { renderChokinBako(); renderStampPage(); renderBookList(); }
@@ -508,103 +622,79 @@
         }
 
         function renderStampPage() {
-            const { year, month } = getCurrentSelectedMonth();
-            const key = `${year}-${month}`;
+            const key = `${selectedYear}-${selectedMonth}`;
             const goal = goals[key] || 10;
             const goalInput = document.getElementById('target-goal-input');
-            const monthTitle = document.getElementById('stamp-month-title');
             const countText = document.getElementById('stamp-count-text');
             const progress = document.getElementById('goal-progress');
             const markers = document.getElementById('goal-markers');
             const grid = document.getElementById('stamp-grid');
-
             if (goalInput) goalInput.value = goal;
-            if (monthTitle) monthTitle.innerText = `${month}月のスタンプ帳`;
-            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp); return d.getFullYear() === year && d.getMonth() + 1 === month; });
+            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
             const count = monthlyLogs.length;
             if (countText) countText.innerText = `${count} / ${goal}`;
             if (progress) progress.style.width = Math.min(100, (count / goal) * 100) + "%";
             if (markers) { let html = ""; for (let i = 0; i <= 5; i++) html += `<span>${Math.round((goal / 5) * i)}</span>`; markers.innerHTML = html; }
-            if (grid) { grid.innerHTML = ""; const icon = STAMPS[month] || "💮"; for (let i = 0; i < 36; i++) { const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); if (i < count) cell.innerText = icon; grid.appendChild(cell); } }
+            if (grid) { grid.innerHTML = ""; const icon = STAMPS[selectedMonth] || "💮"; for (let i = 0; i < 36; i++) { const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); if (i < count) cell.innerText = icon; grid.appendChild(cell); } }
         }
 
         function renderBookList() {
             const list = document.getElementById('book-list');
-            const { year, month } = getCurrentSelectedMonth();
-            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp); return d.getFullYear() === year && d.getMonth() + 1 === month; });
+            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
             const mCountEl = document.getElementById('log-monthly-books');
             if(mCountEl) mCountEl.innerText = monthlyLogs.length;
             if (!list) return;
-            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold text-sm text-left">📚 この月は まだ ありません</div>`; return; }
+            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-10 text-gray-400 font-bold text-xs text-center text-left">📚 記録はありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
-                <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative">
-                    <div class="flex-1 overflow-hidden">
-                        <div class="flex items-center gap-1.5 mb-0.5 text-left">
-                           <span class="text-[8px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0 text-left">${book.date.split('/')[2]}日</span>
-                           <div class="font-black text-[#4E342E] text-xs whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-left">${book.title}</div>
+                <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative">
+                    <div class="flex-1 overflow-hidden text-left">
+                        <div class="flex items-center gap-1.5 mb-0.5">
+                           <span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span>
+                           <div class="font-black text-[#4E342E] text-[10px] whitespace-nowrap overflow-hidden text-ellipsis flex-1">${book.title}</div>
                         </div>
-                        <div class="flex items-center gap-2 text-left">
-                            <div class="text-[9px] text-gray-400 truncate flex-1 text-left">${book.author}</div>
-                            <div class="text-[9px] text-[#29B6F6] font-black shrink-0 text-left">${book.pages}p / ${book.price}円</div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-[8px] text-gray-400 truncate flex-1">${book.author}</div>
+                            <div class="text-[8px] text-[#29B6F6] font-black shrink-0">${book.pages}p / ${book.price}円</div>
                         </div>
                     </div>
-                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left">
-                        <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[9px] p-0.5 text-left">❌</button>
-                        <div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-base ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
+                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left text-left">
+                        <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[8px] p-0.5 text-left text-left text-left">❌</button>
+                        <div class="flex gap-0.5 text-left text-left text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
                     </div>
                 </div>`).join('');
         }
 
-        function updateGoal(val) { const { year, month } = getCurrentSelectedMonth(); goals[`${year}-${month}`] = parseInt(val) || 10; localStorage.setItem('reading_record_v173_goals', JSON.stringify(goals)); renderAll(); }
+        function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem('reading_record_v179_goals', JSON.stringify(goals)); renderAll(); }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
         function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
-        function saveDataFile() { const data = { logs, goals, version: "v173" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップを ほぞんしました！"); }
-        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v173_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v173_goals', JSON.stringify(goals)); renderAll(); showNotice("データを ふくげんしました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
+        function saveDataFile() { const data = { logs, goals, version: "v179" }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`; a.click(); URL.revokeObjectURL(url); showNotice("バックアップしました！"); }
+        function loadDataFile(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if (data.logs && data.goals) { logs = data.logs; goals = data.goals; localStorage.setItem('reading_record_v179_logs', JSON.stringify(logs)); localStorage.setItem('reading_record_v179_goals', JSON.stringify(goals)); renderAll(); showNotice("復元しました！"); } } catch (err) { showNotice("しっぱいしました"); } }; reader.readAsText(file); input.value = ""; }
         
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
-        function stopScanner() { isScannerRunning = false; isProcessingBarcode = false; try { Quagga.stop(); } catch(e) {} document.querySelectorAll('video').forEach(v => { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.remove(); }); document.getElementById('btn-text').innerText = "バーコード"; document.getElementById('guide-box').classList.add('hidden'); document.getElementById('scanner-cover').classList.remove('hidden'); document.getElementById('success-overlay').style.display = "none"; const c = document.querySelector('#interactive canvas'); if (c) c.remove(); }
-        
+        function stopScanner() {
+            isScannerRunning = false; isProcessingBarcode = false;
+            try { Quagga.stop(); } catch(e) {}
+            document.querySelectorAll('video').forEach(v => { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.remove(); });
+            const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "バーコード"; 
+            const sc = document.getElementById('scanner-cover'); if(sc) sc.classList.remove('hidden');
+            const gb = document.getElementById('guide-box'); if(gb) gb.classList.add('hidden');
+            const so = document.getElementById('success-overlay'); if(so) so.style.display = "none";
+            const canvas = document.querySelector('#interactive canvas'); if (canvas) canvas.remove();
+        }
         async function startScanner() {
             if (isScannerRunning) return;
             applyToForm("", "", "", ""); 
-            document.getElementById('btn-text').innerText = "とめる";
-            
-            // Chromebook/PC/Mobile対応の柔軟なカメラ設定
-            const constraints = {
-                facingMode: { ideal: "environment" },
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            };
-
+            const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
+            const constraints = { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } };
             try {
                 Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: document.querySelector('#interactive'),
-                        constraints: constraints,
-                        area: { top: "20%", bottom: "20%" }
-                    },
-                    decoder: { readers: ["ean_reader"] },
-                    frequency: 10,
-                    numOfWorkers: 2,
-                    locator: { patchSize: "medium", halfSample: true }
+                    inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: constraints, area: { top: "20%", bottom: "20%" } },
+                    decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }
                 }, (err) => {
-                    if (err) {
-                        console.error(err);
-                        showNotice("カメラが つかえません。");
-                        stopScanner();
-                        return;
-                    }
-                    Quagga.start();
-                    isScannerRunning = true;
-                    document.getElementById('scanner-cover').classList.add('hidden');
-                    document.getElementById('guide-box').classList.remove('hidden');
+                    if (err) { stopScanner(); showNotice("カメラが使えません。"); return; }
+                    Quagga.start(); isScannerRunning = true; document.getElementById('scanner-cover').classList.add('hidden'); document.getElementById('guide-box').classList.remove('hidden');
                 });
-            } catch (e) {
-                showNotice("エラーが おきました。");
-                stopScanner();
-            }
+            } catch (e) { stopScanner(); }
         }
         
         Quagga.onDetected(data => { 
@@ -616,109 +706,40 @@
             setTimeout(() => { showManualModal(code, true); searchBookData(code); stopScanner(); }, 200); 
         });
 
-        // --- 最強データ取得ロジック (復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates'); applyToForm("", "", "", ""); 
-            la.innerHTML = `<div class="text-center py-6 text-xl text-gray-500 font-black animate-pulse text-left">しらべています...</div>`;
-            
-            let res = { title: "", author: "", price: "" };
-            let pageCandidates = [];
-            let priceCandidates = [];
-
-            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
-                if (data.items && data.items.length > 0) {
-                    const info = data.items[0].volumeInfo;
-                    if (!res.title) res.title = info.title;
-                    if (!res.author) res.author = cleanAuthorName(info.authors?.join(' '));
-                    if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
-                    if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || ""));
-                }
-            }).catch(() => {});
-
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => {
-                if (data && data[0]) {
-                    const b = data[0].summary;
-                    const onix = data[0].onix;
-                    if (!res.title) res.title = b.title;
-                    if (!res.author) res.author = cleanAuthorName(b.author);
-                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages));
-                    try {
-                        const prs = onix?.ProductSupply?.SupplyDetail?.Price;
-                        if (prs) [].concat(prs).forEach(p => { if(p.PriceAmount) priceCandidates.push(extractCleanNum(p.PriceAmount)); });
-                        const exts = onix?.DescriptiveDetail?.Extent;
-                        if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); });
-                    } catch(e) {}
-                }
-            }).catch(() => {});
-
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
-                const txt = await r.text();
-                const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item");
-                if (items.length > 0) {
-                    const item = items[0];
-                    if (!res.title) res.title = item.querySelector("title")?.textContent;
-                    const desc = item.querySelector("description")?.textContent;
-                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
-                    const extent = item.querySelector("extent")?.textContent;
-                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
-                    const pr = item.querySelector("price")?.textContent;
-                    if(pr) priceCandidates.push(extractCleanNum(pr));
-                }
-            }).catch(() => {});
-
+            la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center text-left text-left">しらべています...</div>`;
+            let res = { title: "", author: "", price: "" }; let pageCandidates = []; let priceCandidates = [];
+            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items && data.items.length > 0) { const info = data.items[0].volumeInfo; if (!res.title) res.title = info.title; if (!res.author) res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount)); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
+            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data && data[0]) { const b = data[0].summary; const onix = data[0].onix; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); try { const prs = onix?.ProductSupply?.SupplyDetail?.Price; if (prs) [].concat(prs).forEach(p => { if(p.PriceAmount) priceCandidates.push(extractCleanNum(p.PriceAmount)); }); const exts = onix?.DescriptiveDetail?.Extent; if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); }); } catch(e) {} } }).catch(() => {});
+            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(); const items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc)); const extent = item.querySelector("extent")?.textContent; if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent)); const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr)); } }).catch(() => {});
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
-
             let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
             let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
-
-            if (res.title) {
-                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="flex items-center gap-4 p-5 bg-blue-50 border-4 border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-100 transition-all text-left text-left"><div class="flex-1 overflow-hidden"><span class="text-sm bg-blue-500 text-white px-4 py-1 rounded-full font-black text-left">みつけた！</span><p class="text-xl font-black text-gray-800 line-clamp-1 mt-2 text-left">${res.title}</p><div class="mt-2 text-lg font-black text-[#64B5F6] text-left">${finalPages || "?"}ページ / ${finalPrice || "?"}円</div></div><span class="text-xl font-black text-blue-500 text-left">えらぶ</span></div>`;
-                applyToForm(res.title, res.author, finalPages, finalPrice);
-            } else {
-                la.innerHTML = `<p class="text-center py-6 text-xl text-gray-400 font-black text-left">みつかりませんでした。</p>`;
-                applyToForm("", "", "", ""); 
-            }
+            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full text-left">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
         }
 
         function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
         function scanPageNumsDeeply(t) { return Array.from(t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1])); }
         function cleanAuthorName(s) { if (!s) return ""; let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; return p.filter(x => !p.some(o => o !== x && o.includes(x))).join('').trim(); }
-        
-        function applyToForm(t, a, p, pr) {
-            const ti = document.getElementById('input-title'); const au = document.getElementById('input-author');
-            const pa = document.getElementById('input-pages'); const prEl = document.getElementById('input-price');
-            if(ti) ti.value = t || ""; if(au) au.value = a || ""; if(pa) pa.value = p || ""; if(prEl) prEl.value = pr || "";
-            clearError('title'); clearError('pages'); clearError('price');
-        }
-
+        function applyToForm(t, a, p, pr) { document.getElementById('input-title').value = t || ""; document.getElementById('input-author').value = a || ""; document.getElementById('input-pages').value = p || ""; document.getElementById('input-price').value = pr || ""; clearError('title'); clearError('pages'); clearError('price'); }
         function clearError(t) { const el = document.getElementById('input-' + t); if(el) el.classList.remove('input-error'); }
         function showManualModal(isbn = "", auto = false) { document.getElementById('modal-overlay').classList.remove('hidden'); document.getElementById('input-isbn').value = isbn; }
         function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
         function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
-        
         function manualAddBook() {
-            const ti = document.getElementById('input-title'); const pa = document.getElementById('input-pages');
-            const pr = document.getElementById('input-price'); const au = document.getElementById('input-author');
-            if(!ti || !pa || !pr || !au) return;
-            const t = ti.value.trim(); const p = pa.value.trim(); const r = pr.value.trim(); const a = au.value.trim();
-            if(!t) { ti.classList.add('input-error'); showNotice("なまえを いれてね"); return; }
-            if(!p || p === "0" || !r || r === "0") { 
-                if(!p || p === "0") pa.classList.add('input-error');
-                if(!r || r === "0") pr.classList.add('input-error');
-                showNotice("かいていない ところが あるよ"); return; 
-            }
-            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: r, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
-            localStorage.setItem('reading_record_v173_logs', JSON.stringify(logs)); renderAll(); playBeep();
-            const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); }
-            hideManualModal();
+            const t = document.getElementById('input-title').value.trim(); const p = document.getElementById('input-pages').value.trim();
+            const pr = document.getElementById('input-price').value.trim(); const a = document.getElementById('input-author').value.trim();
+            if(!t) { showNotice("なまえを いれてね"); return; }
+            if(!p || p === "0" || !pr || pr === "0") { showNotice("あいているところを かいてね"); return; }
+            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
+            localStorage.setItem('reading_record_v179_logs', JSON.stringify(logs)); renderAll(); playBeep();
+            const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal();
         }
-
-        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v173_logs', JSON.stringify(logs)); renderAll(); }
-        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v173_logs', JSON.stringify(logs)); renderAll(); } }
+        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem('reading_record_v179_logs', JSON.stringify(logs)); renderAll(); }
+        function deleteEntry(id) { if(confirm("けしても いい？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem('reading_record_v179_logs', JSON.stringify(logs)); renderAll(); } }
         function showNotice(msg) { const bar = document.getElementById('notice-msg'); if(bar) { bar.innerText = msg + " [とじる]"; bar.classList.add('show'); setTimeout(() => bar.classList.remove('show'), 3000); } }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('nav-' + tab).classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
-        function copyForSpreadsheet() { if (logs.length === 0) return; let tsv = "日付\tタイトル\t著者\tページ数\t値段\n"; [...logs].reverse().forEach(b => { tsv += `${b.date}\t${b.title}\t${b.author}\t${b.pages}\t${b.price}\n`; }); const ta = document.createElement("textarea"); ta.value = tsv; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showNotice("コピーしました！スプレッドシートに はりつけてね。"); }
     </script>
 </body>
 </html>

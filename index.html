@@ -318,6 +318,7 @@
                                 <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 7a2 2 0 10-4 0 2 2 0 004 0zm2 0a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
                         </div>
+                        <!-- ガイド枠と赤い線 -->
                         <div id="guide-box" class="scan-frame hidden">
                             <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
                             <div class="scan-corner bl"></div><div class="scan-corner br"></div>
@@ -434,16 +435,16 @@
         </div>
     </div>
 
-    <!-- 検索モーダル -->
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left">
-        <div class="bg-white w-full max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <!-- 検索モーダル (スマホ最適化済み・横並び維持) -->
+    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-2 z-[500] bg-black/60 text-left">
+        <div class="bg-white w-[95%] max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
                 <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
-                    <div class="flex gap-2 mt-1">
-                        <input type="text" id="input-isbn" placeholder="978..." class="flex-1 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-lg font-black">
-                        <button onclick="lookupISBNFromInput()" class="px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD]">さがす</button>
+                    <div class="flex gap-2 mt-1 items-stretch">
+                        <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
+                        <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
                     </div>
                 </div>
                 <div id="search-candidates"></div>
@@ -558,9 +559,9 @@
                         <div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
                         <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div>
                     </div>
-                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left">
+                    <div class="flex flex-col items-end gap-0.5 shrink-0">
                         <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[12px] p-1 font-bold">❌</button>
-                        <div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
+                        <div class="flex gap-0.5">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
                     </div>
                 </div>`).join('');
         }
@@ -631,7 +632,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 最強の検索ロジック (ページ数・金額取得 徹底復元版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底復元・強化版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -741,13 +742,10 @@
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 数字のあとにページ、p、頁、枚が続くパターンを抽出
-            const matches = Array.from(text.matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1]));
-            
-            // "ページ数：123" や "Pages: 123" のパターンも追加
-            const matches2 = Array.from(text.matchAll(/(?:ページ|p|page|pages)[:：\s]*(\d{1,4})/gi), m => parseInt(m[1]));
-            
-            return [...matches, ...matches2].filter(n => !isNaN(n) && n > 5); // 5ページ未満は誤検出とみなす
+            // 数字のあとにページ、p、頁、枚が続くパターン、または「ページ数: 123」のようなパターンを抽出
+            const matches = Array.from(text.matchAll(/(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})|(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi));
+            // マッチしたグループ（1番目または2番目）から数字を取り出す
+            return matches.map(m => parseInt(m[1] || m[2])).filter(n => !isNaN(n) && n > 5);
         }
         
         function cleanAuthorName(s) { 

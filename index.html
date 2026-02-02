@@ -234,7 +234,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ：初期状態を非表示・透明に修正 */
+        /* 通知メッセージ */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -244,16 +244,15 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { 
-            transform: translateX(-50%) translateY(0); 
-            opacity: 1; visibility: visible; 
-        }
+        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        
+        /* エラー時の赤枠 */
+        .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div class="app-container">
-        
         <header>
             <h1 class="fancy-title flex items-center justify-center gap-3 leading-none">
                 <span class="text-3xl bounce-icon">📖</span> どくしょ　ちょきんばこ
@@ -309,7 +308,6 @@
             <div class="section-half">
                 <div class="bg-[#E1F5FE] rounded-[1rem] p-2 border-2 border-solid border-[#4FC3F7] flex flex-col relative flex-1 min-h-0">
                     <div class="flex w-full justify-between items-center mb-1 shrink-0">
-                        <!-- 文字を変更し、サイズを section-title-top と同じ 0.8rem に調整 -->
                         <p class="text-[0.8rem] font-black text-[#0288D1]">バーコードよみとりカメラ</p>
                         <button onclick="showHelp()" class="px-2 py-0.5 bg-white border border-[#4FC3F7] rounded-full text-[8px] font-black text-[#0288D1] active:scale-95 shadow-sm">❓ つかいかた</button>
                     </div>
@@ -416,7 +414,7 @@
     </div>
 
     <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70 text-left">
-        <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl overflow-hidden">
+        <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl overflow-hidden text-left">
             <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
             <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1 text-left">
                 <div class="bg-[#E1F5FE] p-2.5 rounded-xl border border-[#4FC3F7]">
@@ -439,9 +437,9 @@
     <!-- 検索モーダル -->
     <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[500] bg-black/60 text-left">
         <div class="bg-white w-full max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center">🔎 本のばんごうで さがす</h3>
-            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left">
-                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
+            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
+                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
                     <div class="flex gap-2 mt-1">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-lg font-black">
@@ -449,17 +447,17 @@
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-4">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
                     <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
                     <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
                     <input type="text" id="input-author" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
-                    <div class="flex gap-3 text-left">
-                        <div class="flex-1 text-left">
+                    <div class="flex gap-3">
+                        <div class="flex-1">
                             <label class="text-[10px] font-black text-gray-400">ページ</label>
                             <input type="number" id="input-pages" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
-                        <div class="flex-1 text-left">
+                        <div class="flex-1">
                             <label class="text-[10px] font-black text-gray-400">ねだん</label>
                             <input type="number" id="input-price" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
                         </div>
@@ -474,16 +472,15 @@
     </div>
 
     <div id="celebration" class="fixed inset-0 pointer-events-none z-[1000] flex items-center justify-center hidden">
-        <div class="bg-white/95 p-10 rounded-[3rem] shadow-2xl text-center border-4 border-[#FF7043] animate-bounce">
+        <div class="bg-white/95 p-10 rounded-[3rem] shadow-2xl text-center border-4 border-[#FF7043] animate-bounce text-left">
             <p class="text-7xl mb-4">🎉</p>
-            <h2 class="text-xl font-black text-[#FF5722]">きろく したよ！</h2>
+            <h2 class="text-xl font-black text-[#FF5722] text-left">きろく したよ！</h2>
         </div>
     </div>
 
     <div id="notice-msg"></div>
 
     <script>
-        // --- 状態管理 (v1 固定) ---
         const STORAGE_KEY_LOGS = 'reading_record_main_v1_logs';
         const STORAGE_KEY_GOALS = 'reading_record_main_v1_goals';
         
@@ -512,8 +509,7 @@
         function initDateSelectors() {
             const yLog = document.getElementById('year-selector-log'), yStamp = document.getElementById('year-selector-stamp');
             const mLog = document.getElementById('month-selector-log'), mStamp = document.getElementById('month-selector-stamp');
-            const currentYear = new Date().getFullYear();
-            const years = []; for(let i = 2020; i <= currentYear + 16; i++) years.push(i);
+            const years = []; for(let i = 2020; i <= new Date().getFullYear() + 16; i++) years.push(i);
             years.reverse(); 
             if(yLog && yStamp) [yLog, yStamp].forEach(sel => { if(sel) { sel.innerHTML = ""; years.forEach(y => sel.add(new Option(`${y}年`, y))); sel.value = selectedYear; } });
             if(mLog && mStamp) [mLog, mStamp].forEach(sel => { if(sel) { sel.innerHTML = ""; for(let i=1; i<=12; i++) sel.add(new Option(`${i}月`, i)); sel.value = selectedMonth; } });
@@ -557,14 +553,14 @@
             if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
                 <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative text-left">
-                    <div class="flex-1 overflow-hidden">
+                    <div class="flex-1 overflow-hidden text-left">
                         <div class="flex items-center gap-1.5 mb-0.5"><span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span>
                         <div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
                         <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div>
                     </div>
                     <div class="flex flex-col items-end gap-0.5 shrink-0 text-left">
                         <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[12px] p-1 font-bold">❌</button>
-                        <div class="flex gap-0.5">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
+                        <div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
                     </div>
                 </div>`).join('');
         }
@@ -635,29 +631,142 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 本の検索ロジック ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底復元版) ---
         async function searchBookData(isbn) {
-            const la = document.getElementById('search-candidates'); la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
-            let res = { title: "", author: "", price: "" }; let pageCandidates = [], priceCandidates = [];
-            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => { if (data.items?.[0]) { const info = data.items[0].volumeInfo; res.title = info.title; res.author = cleanAuthorName(info.authors?.join(' ')); if (info.pageCount) pageCandidates.push(parseInt(info.pageCount)); if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount)); pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description || "")); } }).catch(() => {});
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => { if (data?.[0]) { const b = data[0].summary, onix = data[0].onix; if (!res.title) res.title = b.title; if (!res.author) res.author = cleanAuthorName(b.author); if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); try { const exts = onix?.DescriptiveDetail?.Extent; if (exts) exts.forEach(e => { if (["00", "11", "07", "08"].includes(e.ExtentType)) pageCandidates.push(extractCleanNum(e.ExtentValue)); }); } catch(e) {} } }).catch(() => {});
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => { const txt = await r.text(), items = new DOMParser().parseFromString(txt, "text/xml").querySelectorAll("item"); if (items.length > 0) { const item = items[0]; if (!res.title) res.title = item.querySelector("title")?.textContent; const desc = item.querySelector("description")?.textContent; if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc)); const extent = item.querySelector("extent")?.textContent; if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent)); const pr = item.querySelector("price")?.textContent; if(pr) priceCandidates.push(extractCleanNum(pr)); } }).catch(() => {});
+            const la = document.getElementById('search-candidates');
+            la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
+            
+            let res = { title: "", author: "", price: "" };
+            let pageCandidates = [];
+            let priceCandidates = [];
+
+            // 1. Google Books API (詳細な説明文スキャン)
+            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
+                if (data.items && data.items.length > 0) {
+                    const info = data.items[0].volumeInfo;
+                    res.title = info.title || "";
+                    res.author = cleanAuthorName(info.authors?.join(' ') || "");
+                    if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
+                    if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
+                    // 説明文の中からページ数を探す（最強ロジック）
+                    if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
+                }
+            }).catch(() => {});
+
+            // 2. openBD API (ONIX構造から精密取得)
+            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => {
+                if (data && data[0]) {
+                    const b = data[0].summary, onix = data[0].onix;
+                    if (!res.title) res.title = b.title || "";
+                    if (!res.author) res.author = cleanAuthorName(b.author || "");
+                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages));
+                    try {
+                        const exts = onix?.DescriptiveDetail?.Extent;
+                        if (exts && Array.isArray(exts)) {
+                            exts.forEach(e => {
+                                if (["00", "11", "07", "08", "06", "05"].includes(e.ExtentType)) {
+                                     pageCandidates.push(extractCleanNum(e.ExtentValue));
+                                }
+                            });
+                        }
+                    } catch(e) {}
+                    try {
+                        const prices = onix?.ProductSupply?.SupplyDetail?.Price;
+                        if (prices && Array.isArray(prices)) {
+                            prices.forEach(p => { if (p.PriceAmount) priceCandidates.push(extractCleanNum(p.PriceAmount)); });
+                        }
+                    } catch(e) {}
+                }
+            }).catch(() => {});
+
+            // 3. NDL (国立国会図書館)
+            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
+                const txt = await r.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(txt, "text/xml");
+                const item = xmlDoc.querySelector("item");
+                if (item) {
+                    if (!res.title) res.title = item.querySelector("title")?.textContent;
+                    const desc = item.querySelector("description")?.textContent;
+                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    // extent (大きさ・容量) からページ数を抽出
+                    const extent = item.querySelector("extent")?.textContent;
+                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                    const priceText = item.querySelector("price")?.textContent;
+                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
+                }
+            }).catch(() => {});
+
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
-            let finalPages = pageCandidates.length > 0 ? Math.max(...pageCandidates.filter(n => !isNaN(n) && n > 5)).toString() : "";
-            let finalPrice = priceCandidates.length > 0 ? Math.max(...priceCandidates.filter(n => !isNaN(n) && n > 0)).toString() : "";
-            if (res.title) { la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left"><span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full text-left">みつけた！</span><p class="text-sm font-black text-gray-800 line-clamp-1 mt-1 text-left">${res.title}</p></div>`; applyToForm(res.title, res.author, finalPages, finalPrice); } 
-            else { la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center text-left">みつかりませんでした。</p>`; applyToForm("", "", "", ""); }
+
+            // 候補の中から最も大きな数字を採用（-Infinity回避、0除外）
+            const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0);
+            const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0);
+            
+            // ページ数は最大のものを採用（本文＋あとがき等が反映されやすいため）
+            let finalPages = validPages.length > 0 ? Math.max(...validPages).toString() : "";
+            let finalPrice = validPrices.length > 0 ? Math.max(...validPrices).toString() : "";
+            
+            // 未取得項目を確認
+            const missing = [];
+            if (!res.title) missing.push('input-title');
+            if (!finalPages) missing.push('input-pages');
+            if (!finalPrice) missing.push('input-price');
+
+            if (res.title) {
+                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left">
+                    <span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span>
+                    <p class="text-sm font-black text-gray-800 line-clamp-1 mt-1">${res.title}</p>
+                    ${missing.length > 0 ? '<p class="text-[10px] text-red-500 font-bold mt-1">※たりない ところは 入力してね</p>' : ''}
+                </div>`;
+                applyToForm(res.title, res.author, finalPages, finalPrice);
+                
+                // 未取得項目を赤枠にする
+                if (!finalPages) document.getElementById('input-pages').classList.add('input-error');
+                if (!finalPrice) document.getElementById('input-price').classList.add('input-error');
+                
+            } else {
+                la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center text-left">みつかりませんでした。</p>`;
+                applyToForm("", "", "", "");
+            }
         }
 
-        function extractCleanNum(v) { return v ? parseInt(v.toString().replace(/[^0-9]/g, '')) : 0; }
-        function scanPageNumsDeeply(t) { return Array.from(t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1])); }
+        function extractCleanNum(v) { 
+            if(!v) return 0;
+            const s = v.toString().replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
+            const num = parseInt(s.replace(/[^0-9]/g, ''));
+            return isNaN(num) ? 0 : num;
+        }
+
+        function scanPageNumsDeeply(t) { 
+            if(!t) return [];
+            const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
+            // 数字のあとにページ、p、頁、枚が続くパターンを抽出
+            const matches = Array.from(text.matchAll(/(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi), m => parseInt(m[1]));
+            
+            // "ページ数：123" や "Pages: 123" のパターンも追加
+            const matches2 = Array.from(text.matchAll(/(?:ページ|p|page|pages)[:：\s]*(\d{1,4})/gi), m => parseInt(m[1]));
+            
+            return [...matches, ...matches2].filter(n => !isNaN(n) && n > 5); // 5ページ未満は誤検出とみなす
+        }
+        
         function cleanAuthorName(s) { 
             if (!s) return ""; 
+            // 修正済み：正規表現のエラーを修正
             let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); 
             let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; 
             return p.filter(x => !p.some(o => o !== x && o.includes(x))).join(' ').trim(); 
         }
-        function applyToForm(t, a, p, pr) { document.getElementById('input-title').value = t || ""; document.getElementById('input-author').value = a || ""; document.getElementById('input-pages').value = p || ""; document.getElementById('input-price').value = pr || ""; }
+
+        function applyToForm(t, a, p, pr) { 
+            document.getElementById('input-title').value = t || ""; 
+            document.getElementById('input-author').value = a || ""; 
+            document.getElementById('input-pages').value = p || ""; 
+            document.getElementById('input-price').value = pr || "";
+            // エラー枠リセット
+            ['input-title', 'input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
+        }
+
         function showManualModal(isbn = "") { document.getElementById('modal-overlay').classList.remove('hidden'); if(document.getElementById('input-isbn')) document.getElementById('input-isbn').value = isbn; }
         function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
         function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
@@ -697,11 +806,15 @@
                 setTimeout(() => { showManualModal(code); searchBookData(code); stopScanner(); }, 200); 
             });
         }
-
         function manualAddBook() {
             const t = document.getElementById('input-title').value.trim(), p = document.getElementById('input-pages').value.trim(), pr = document.getElementById('input-price').value.trim(), a = document.getElementById('input-author').value.trim();
             if(!t) { showNotice("なまえを いれてね"); return; }
-            if(!p || p === "0" || !pr || pr === "0") { showNotice("あいているところを かいてね"); return; }
+            if(!p || p === "0" || !pr || pr === "0") { 
+                showNotice("あいているところを かいてね");
+                if(!p || p==="0") document.getElementById('input-pages').classList.add('input-error');
+                if(!pr || pr==="0") document.getElementById('input-price').classList.add('input-error');
+                return; 
+            }
             logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
             localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); playBeep();
             const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal();

@@ -240,7 +240,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ */
+        /* 通知メッセージ：初期状態を非表示・透明に設定 */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -250,7 +250,10 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        #notice-msg.show { 
+            transform: translateX(-50%) translateY(0); 
+            opacity: 1; visibility: visible; 
+        }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -319,8 +322,7 @@
                             <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
                             <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2]">📖 のこしたデータをよむ</button>
                         </div>
-                        <!-- inputのstyleを修正：確実にイベントが発火するように -->
-                        <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" style="position: absolute; opacity: 0; width: 1px; height: 1px; top: -100px; left: -100px;">
+                        <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
                     </div>
                 </div>
             </div>
@@ -509,16 +511,27 @@
         const STORAGE_KEY_LOGS = 'reading_record_main_v1_logs';
         const STORAGE_KEY_GOALS = 'reading_record_main_v1_goals';
         
-        let logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
-        let goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
+        let logs = [];
+        let goals = {};
+        
+        try {
+            logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
+            goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
+        } catch(e) {
+            console.error("Storage load error", e);
+            logs = [];
+            goals = {};
+        }
+
         let isScannerRunning = false, isProcessingBarcode = false;
         let selectedYear = new Date().getFullYear(), selectedMonth = new Date().getMonth() + 1;
+        let audioCtx = null;
 
         const STAMPS = { 1: "🎍", 2: "❄️", 3: "🌸", 4: "🎒", 5: "🎏", 6: "💠", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep() {
             try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
                 osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
@@ -529,7 +542,12 @@
             } catch(e) {}
         }
 
-        window.onload = () => { initDateSelectors(); renderAll(); };
+        window.onload = () => { 
+            try {
+                initDateSelectors(); 
+                renderAll();
+            } catch(e) { console.error("Window onload error", e); }
+        };
 
         function initDateSelectors() {
             const yLog = document.getElementById('year-selector-log'), yStamp = document.getElementById('year-selector-stamp');
@@ -684,9 +702,7 @@
                     const b = data[0].summary, onix = data[0].onix;
                     if (!res.title) res.title = b.title || "";
                     if (!res.author) res.author = cleanAuthorName(b.author || "");
-                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages)); // summaryのpages
-                    
-                    // ONIX Extent (ページ数)
+                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages));
                     try {
                         const exts = onix?.DescriptiveDetail?.Extent;
                         if (exts && Array.isArray(exts)) {
@@ -697,7 +713,6 @@
                             });
                         }
                     } catch(e) {}
-                    // ONIX Price (金額)
                     try {
                         const prices = onix?.ProductSupply?.SupplyDetail?.Price;
                         if (prices && Array.isArray(prices)) {
@@ -712,20 +727,16 @@
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const items = xmlDoc.getElementsByTagName("item");
-                if (items.length > 0) {
-                    const item = items[0];
+                const item = xmlDoc.querySelector("item");
+                if (item) {
                     if (!res.title) res.title = item.querySelector("title")?.textContent;
-                    
-                    const descNode = item.getElementsByTagName("description")[0];
-                    if (descNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(descNode.textContent));
-                    
+                    const desc = item.querySelector("description")?.textContent;
+                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
                     // extent (大きさ・容量) からページ数を抽出
-                    const extentNode = item.getElementsByTagName("extent")[0];
-                    if (extentNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extentNode.textContent));
-                    
-                    const priceNode = item.getElementsByTagName("price")[0];
-                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
+                    const extent = item.querySelector("extent")?.textContent;
+                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                    const priceText = item.querySelector("price")?.textContent;
+                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
                 }
             }).catch(() => {});
 
@@ -773,7 +784,7 @@
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 数字＋ページ、p、頁、枚、または「ページ数：数字」のパターン
+            // 数字＋ページ、p、頁、枚、または「ページ数：数字」のパターン (matchAll不使用)
             const regex = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)|(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})/gi;
             let match;
             const results = [];
@@ -786,8 +797,11 @@
         
         function cleanAuthorName(s) { 
             if (!s) return ""; 
-            // 修正済み：正規表現のエラーを修正
-            let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); 
+            // 修正済み：年号パターン削除
+            let c = s.replace(/(\d{4}\s*-\s*\d{4}|\d{4}\s*-\s*|\s*-\s*\d{4})/g, '')
+                     .replace(/[著編訳]|監修|ほか|イラスト/g, '')
+                     .replace(/[／,，、．.\[\]\(\)（）]/g, ' ')
+                     .trim(); 
             let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; 
             return p.filter(x => !p.some(o => o !== x && o.includes(x))).join(' ').trim(); 
         }

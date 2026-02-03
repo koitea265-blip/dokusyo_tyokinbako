@@ -18,31 +18,30 @@
             --text-main: #D84315;
         }
 
-        body {
-            font-family: 'Zen Maru Gothic', sans-serif;
-            background-color: var(--app-bg);
-            overscroll-behavior: none;
-            color: #4E342E;
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            position: fixed;
+            background-color: var(--app-bg);
+            color: #4E342E;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            -webkit-text-size-adjust: 100%;
         }
 
-        /* --- メインコンテナ --- */
+        /* --- メインコンテナ（縦長固定・レスポンシブ対応） --- */
         .app-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             width: 100%;
-            max-width: 420px;
             height: 100%;
+            max-width: 420px; /* 常にスマホ幅で固定 */
             margin: 0 auto;
             background-color: white;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative;
             box-sizing: border-box;
             padding-top: max(10px, env(safe-area-inset-top, 10px));
             border-left: 1px solid #EEE;
@@ -81,22 +80,26 @@
         .tab-content.active { display: flex; flex-direction: column; }
         #tab-log, #tab-stamp { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
+        /* ホーム画面レイアウト */
         #tab-home.active { 
             justify-content: stretch; 
             padding: 0;
             overflow-y: hidden;
             gap: 0;
+            flex-direction: column; /* 常に縦並び */
         }
 
-        /* 1:1 分割設定 */
+        /* セクション分割設定 */
         .section-half {
-            height: 50%;
+            flex: 1;
             min-height: 0;
             display: flex;
             flex-direction: column;
             padding: 0.35rem;
             box-sizing: border-box;
             overflow: hidden;
+            height: 50%;
+            width: 100%;
         }
 
         /* --- 貯金箱エリア --- */
@@ -152,8 +155,8 @@
             margin-top: -2px;
             margin-bottom: 4px;
         }
-        .chokin-value { font-size: clamp(24px, 4.5vh, 34px); font-weight: 900; color: #E64A19; line-height: 1; }
-        .chokin-unit { font-size: clamp(11px, 1.6vh, 13px); font-weight: 900; color: #8D6E63; }
+        .chokin-value { font-size: clamp(24px, 4.5vh, 46px); font-weight: 900; color: #E64A19; line-height: 1; }
+        .chokin-unit { font-size: clamp(11px, 1.6vh, 16px); font-weight: 900; color: #8D6E63; }
 
         .home-action-buttons {
             flex-shrink: 0;
@@ -180,6 +183,7 @@
         #scanner-cover { position: absolute; inset: 0; background-color: #E1F5FE; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
         #success-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
 
+        /* スキャン用ガイド */
         .scan-frame {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; height: 60%; z-index: 30; pointer-events: none;
@@ -236,7 +240,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ */
+        /* 通知メッセージ：初期状態を非表示・透明に設定 */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -246,7 +250,10 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        #notice-msg.show { 
+            transform: translateX(-50%) translateY(0); 
+            opacity: 1; visibility: visible; 
+        }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -668,7 +675,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文の中からページ数を探す（最強ロジック）
+                    // 説明文もスキャン
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});
@@ -704,19 +711,19 @@
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const item = xmlDoc.getElementsByTagName("item")[0];
-                if (item) {
-                    if (!res.title) res.title = item.getElementsByTagName("title")[0]?.textContent;
+                const items = xmlDoc.getElementsByTagName("item");
+                if (items.length > 0) {
+                    const item = items[0];
+                    if (!res.title) res.title = item.querySelector("title")?.textContent;
                     
-                    const desc = item.getElementsByTagName("description")[0]?.textContent;
-                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    const descNode = item.getElementsByTagName("description")[0];
+                    if (descNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(descNode.textContent));
                     
-                    // extent (大きさ・容量) からページ数を抽出
-                    const extent = item.getElementsByTagName("extent")[0]?.textContent;
-                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
+                    const extentNode = item.getElementsByTagName("extent")[0];
+                    if (extentNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extentNode.textContent));
                     
-                    const priceText = item.getElementsByTagName("price")[0]?.textContent;
-                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
+                    const priceNode = item.getElementsByTagName("price")[0];
+                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
                 }
             }).catch(() => {});
 
@@ -764,10 +771,15 @@
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 数字のあとにページ、p、頁、枚が続くパターン、または「ページ数: 123」のようなパターンを抽出
-            const matches = Array.from(text.matchAll(/(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})|(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi));
-            // マッチしたグループ（1番目または2番目）から数字を取り出す
-            return matches.map(m => parseInt(m[1] || m[2])).filter(n => !isNaN(n) && n > 5);
+            // 数字＋ページ、p、頁、枚、または「ページ数：数字」のパターン (matchAllを使わない)
+            const regex = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)|(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})/gi;
+            let match;
+            const results = [];
+            while ((match = regex.exec(text)) !== null) {
+                const num = parseInt(match[1] || match[2]);
+                if (!isNaN(num) && num > 5) results.push(num);
+            }
+            return results;
         }
         
         function cleanAuthorName(s) { 
@@ -807,6 +819,7 @@
             if (isScannerRunning || typeof Quagga === 'undefined') return;
             const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
             try {
+                playBeep(); // 音の初期化
                 Quagga.init({
                     inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "10%", bottom: "10%" } },
                     decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }

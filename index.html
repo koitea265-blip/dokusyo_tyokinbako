@@ -317,10 +317,13 @@
                         </button>
                         <div class="flex gap-1">
                             <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
-                            <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2]">📖 のこしたデータをよむ</button>
+                            <!-- 変更箇所：ボタンをラベルに変更し、inputを内包させる -->
+                            <label class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2] text-center cursor-pointer flex items-center justify-center relative overflow-hidden">
+                                📖 のこしたデータをよむ
+                                <!-- スマホ対応：透明なinputをラベル全体に被せる -->
+                                <input type="file" accept=".json" onchange="loadDataFile(this)" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                            </label>
                         </div>
-                        <!-- iOS対応：透明にして画面外に飛ばす -->
-                        <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" style="position: absolute; opacity: 0; width: 1px; height: 1px; top: -10000px; left: -10000px; pointer-events: none;">
                     </div>
                 </div>
             </div>
@@ -462,7 +465,7 @@
         <div class="bg-white w-[95%] max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
-                <div class="p-3 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
+                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
                     <label class="text-xs font-black text-[#0277BD]">978ではじまるすうじをいれてください</label>
                     <div class="flex gap-2 mt-1 items-stretch">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
@@ -470,7 +473,7 @@
                     </div>
                 </div>
                 <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-3 text-left">
+                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
                     <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
                     <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
                     <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
@@ -588,7 +591,8 @@
             const list = document.getElementById('book-list'), headEl = document.getElementById('log-month-header');
             if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
             const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            if (document.getElementById('log-monthly-books')) document.getElementById('log-monthly-books').innerText = monthlyLogs.length;
+            const mBooksEl = document.getElementById('log-monthly-books');
+            if (mBooksEl) mBooksEl.innerText = monthlyLogs.length;
             if (!list) return;
             if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
@@ -671,7 +675,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 最強の検索ロジック (ページ数・金額取得 徹底強化・完全復元版) ---
+        // --- 本の検索ロジック (最強のページ数・金額取得 徹底強化・完全復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -688,7 +692,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文もスキャン
+                    // 説明文の中からページ数を探す（最強ロジック）
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});

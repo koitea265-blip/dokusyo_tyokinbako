@@ -260,6 +260,12 @@
             position: fixed; inset: 0; background: white; z-index: 99999;
             display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
+
+        /* 達成時のプログレスバー */
+        .progress-gold {
+            background: linear-gradient(to right, #FFD700, #FDB931) !important;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -315,14 +321,14 @@
                         <button id="btn-copy" onclick="copyForSpreadsheet()" class="btn-clear w-full py-1 bg-[#4CAF50] text-white text-[10px] border-b-2 border-[#2E7D32]">
                             📊 表(ひょう)にするためのコピー
                         </button>
-                        <div class="flex gap-1">
+                        <div class="flex gap-1 relative">
                             <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
-                            <!-- 変更箇所：ボタンをラベルに変更し、inputを内包させる -->
-                            <label class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2] text-center cursor-pointer flex items-center justify-center relative overflow-hidden">
+                            <!-- 修正箇所：ボタン風の見た目の中に、透明なinputを配置（スマホ対応） -->
+                            <div class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2] relative text-center flex items-center justify-center cursor-pointer">
                                 📖 のこしたデータをよむ
-                                <!-- スマホ対応：透明なinputをラベル全体に被せる -->
-                                <input type="file" accept=".json" onchange="loadDataFile(this)" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                            </label>
+                                <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" 
+                                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 50;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -439,6 +445,16 @@
         </div>
     </div>
 
+    <!-- 目標達成のお祝いモーダル -->
+    <div id="goal-achieved-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[800] bg-black/80 text-center">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 border-4 border-yellow-400 shadow-2xl animate-bounce">
+            <p class="text-6xl mb-4">🎊</p>
+            <h3 class="text-2xl font-black text-orange-500 mb-2">おめでとう！</h3>
+            <p class="text-lg font-bold text-gray-700">こんげつの もくひょう<br>たっせい！</p>
+            <button onclick="document.getElementById('goal-achieved-modal').classList.add('hidden')" class="mt-6 px-8 py-3 bg-yellow-400 text-white rounded-xl font-black text-xl shadow-lg border-b-4 border-yellow-600 active:scale-95">やったね！</button>
+        </div>
+    </div>
+
     <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70 text-left">
         <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl overflow-hidden text-left">
             <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
@@ -530,11 +546,43 @@
 
         const STAMPS = { 1: "🎍", 2: "❄️", 3: "🌸", 4: "🎒", 5: "🎏", 6: "💠", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
 
-        function playBeep() {
+        function playFanfare() {
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                
+                const t = audioCtx.currentTime;
+                // パパパパン！ (ファンファーレ)
+                const playTone = (freq, time, dur) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, time);
+                    gain.gain.setValueAtTime(0, time);
+                    gain.gain.linearRampToValueAtTime(0.08, time + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(time);
+                    osc.stop(time + dur);
+                };
+
+                playTone(392.00, t, 0.15);       
+                playTone(523.25, t + 0.15, 0.15);
+                playTone(659.25, t + 0.30, 0.15); 
+                playTone(783.99, t + 0.45, 0.15);
+                playTone(1046.50, t + 0.60, 0.6); 
+                playTone(523.25, t + 0.60, 0.6);  
+
+            } catch(e) {}
+        }
+        
+        function playBeep() {
+             try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
@@ -583,7 +631,15 @@
             const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
             const count = monthlyLogs.length;
             if (countText) countText.innerText = `${count} / ${goal}`;
+            
+            // 達成時にプログレスバーを金色にする
+            if (count >= goal) {
+                progress.className = "h-full transition-all duration-700 progress-gold";
+            } else {
+                progress.className = "bg-gradient-to-r from-[#FFAB91] to-[#FF7043] h-full transition-all duration-700";
+            }
             if (progress) progress.style.width = Math.min(100, (count / goal) * 100) + "%";
+            
             if (grid) { grid.innerHTML = ""; const icon = STAMPS[selectedMonth] || "💮"; for (let i = 0; i < 36; i++) { const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); if (i < count) cell.innerText = icon; grid.appendChild(cell); } }
         }
 
@@ -591,8 +647,7 @@
             const list = document.getElementById('book-list'), headEl = document.getElementById('log-month-header');
             if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
             const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            const mBooksEl = document.getElementById('log-monthly-books');
-            if (mBooksEl) mBooksEl.innerText = monthlyLogs.length;
+            if (document.getElementById('log-monthly-books')) document.getElementById('log-monthly-books').innerText = monthlyLogs.length;
             if (!list) return;
             if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
@@ -675,7 +730,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 本の検索ロジック (最強のページ数・金額取得 徹底強化・完全復元版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底強化・完全復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -728,22 +783,36 @@
                 const txt = await r.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const item = xmlDoc.querySelector("item");
-                if (item) {
-                    if (!res.title) res.title = item.querySelector("title")?.textContent;
-                    const desc = item.querySelector("description")?.textContent;
+                const item = xmlDoc.getElementsByTagName("item")[0];
+                // iOSなど一部環境でのタグ名取得の安全策
+                const getItem = (doc) => doc.querySelector("item") || doc.getElementsByTagName("item")[0];
+                const targetItem = getItem(xmlDoc);
+
+                if (targetItem) {
+                    // タグ名を指定して安全に取得するヘルパー
+                    const getVal = (tag) => {
+                         const el = targetItem.getElementsByTagName(tag)[0] || targetItem.getElementsByTagName("dc:"+tag)[0] || targetItem.getElementsByTagName("dcterms:"+tag)[0];
+                         return el ? el.textContent : "";
+                    };
+
+                    const t = getVal("title");
+                    if (!res.title) res.title = t;
+                    
+                    const desc = getVal("description");
                     if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
+                    
                     // extent (大きさ・容量) からページ数を抽出
-                    const extent = item.querySelector("extent")?.textContent;
+                    const extent = getVal("extent");
                     if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
-                    const priceText = item.querySelector("price")?.textContent;
+                    
+                    const priceText = getVal("price");
                     if (priceText) priceCandidates.push(extractCleanNum(priceText));
                 }
             }).catch(() => {});
 
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
 
-            // 候補の中から最も大きな数字を採用（-Infinity回避、0除外）
+            // 数字の選定 (大きい順にソートして最大値を採用)
             const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             
@@ -798,7 +867,7 @@
         
         function cleanAuthorName(s) { 
             if (!s) return ""; 
-            // 修正済み：年号パターン削除
+            // 年号などの不要な情報を削除
             let c = s.replace(/(\d{4}\s*-\s*\d{4}|\d{4}\s*-\s*|\s*-\s*\d{4})/g, '')
                      .replace(/[著編訳]|監修|ほか|イラスト/g, '')
                      .replace(/[／,，、．.\[\]\(\)（）]/g, ' ')
@@ -816,11 +885,24 @@
             ['input-title', 'input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
         }
 
-        function showManualModal(isbn = "") { document.getElementById('modal-overlay').classList.remove('hidden'); if(document.getElementById('input-isbn')) document.getElementById('input-isbn').value = isbn; }
+        function showManualModal(isbn = "") { 
+            document.getElementById('modal-overlay').classList.remove('hidden'); 
+            
+            // フォームのクリア処理
+            if(document.getElementById('input-isbn')) document.getElementById('input-isbn').value = isbn;
+            document.getElementById('input-title').value = "";
+            document.getElementById('input-author').value = "";
+            document.getElementById('input-pages').value = "";
+            document.getElementById('input-price').value = "";
+            
+            // 検索候補とエラー表示もクリア
+            document.getElementById('search-candidates').innerHTML = "";
+            ['input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
+        }
+
         function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
         function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
 
-        // --- バーコード制御 ---
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() {
             isScannerRunning = false; isProcessingBarcode = false;
@@ -836,6 +918,7 @@
             if (isScannerRunning || typeof Quagga === 'undefined') return;
             const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
             try {
+                playFanfare(); // 音の初期化（許可取り）
                 Quagga.init({
                     inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "10%", bottom: "10%" } },
                     decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }
@@ -851,7 +934,18 @@
         if(typeof Quagga !== 'undefined') {
             Quagga.onDetected(data => { 
                 const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13 || code.startsWith('192')) return;
-                isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; 
+                isProcessingBarcode = true; 
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                } catch(e){}
+
+                document.getElementById('success-overlay').style.display = "flex"; 
                 setTimeout(() => { showManualModal(code); searchBookData(code); stopScanner(); }, 200); 
             });
         }
@@ -864,9 +958,26 @@
                 if(!pr || pr==="0") document.getElementById('input-price').classList.add('input-error');
                 return; 
             }
-            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: new Date().toLocaleDateString('ja-JP'), timestamp: Date.now() });
-            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); playBeep();
-            const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } hideManualModal();
+            const now = new Date();
+            const recordDate = new Date(selectedYear, selectedMonth - 1, now.getDate());
+
+            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: recordDate.toLocaleDateString('ja-JP'), timestamp: recordDate.getTime() });
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); 
+            
+            renderAll(); 
+            playFanfare(); // ファンファーレ
+            
+            hideManualModal();
+
+            const key = `${selectedYear}-${selectedMonth}`;
+            const goal = goals[key] || 10;
+            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
+
+            if (monthlyLogs.length >= goal) {
+                 checkGoalAchievement(); 
+            } else {
+                 const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } 
+            }
         }
         function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); }
         function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }

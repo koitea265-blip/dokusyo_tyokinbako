@@ -240,7 +240,7 @@
         .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
         .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
 
-        /* 通知メッセージ：初期状態を非表示・透明に設定 */
+        /* 通知メッセージ */
         #notice-msg {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
             background: rgba(62, 39, 35, 0.95); color: white;
@@ -250,10 +250,7 @@
             width: auto; min-width: 200px;
             opacity: 0; visibility: hidden; pointer-events: none;
         }
-        #notice-msg.show { 
-            transform: translateX(-50%) translateY(0); 
-            opacity: 1; visibility: visible; 
-        }
+        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
         
         /* エラー時の赤枠 */
         .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
@@ -322,7 +319,8 @@
                             <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
                             <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2]">📖 のこしたデータをよむ</button>
                         </div>
-                        <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
+                        <!-- iOS対応：透明にして画面外に飛ばす -->
+                        <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" style="position: absolute; opacity: 0; width: 1px; height: 1px; top: -10000px; left: -10000px; pointer-events: none;">
                     </div>
                 </div>
             </div>
@@ -590,8 +588,7 @@
             const list = document.getElementById('book-list'), headEl = document.getElementById('log-month-header');
             if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
             const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            const mBooksEl = document.getElementById('log-monthly-books');
-            if (mBooksEl) mBooksEl.innerText = monthlyLogs.length;
+            if (document.getElementById('log-monthly-books')) document.getElementById('log-monthly-books').innerText = monthlyLogs.length;
             if (!list) return;
             if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
             list.innerHTML = monthlyLogs.map(book => `
@@ -691,7 +688,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文の中からページ数を探す（最強ロジック）
+                    // 説明文もスキャン
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});

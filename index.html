@@ -44,7 +44,9 @@
             flex-direction: column;
             position: relative;
             box-sizing: border-box;
-            padding-top: max(35px, env(safe-area-inset-top, 35px));
+            padding-top: max(10px, env(safe-area-inset-top, 10px));
+            border-left: 1px solid #EEE;
+            border-right: 1px solid #EEE;
         }
 
         header {
@@ -313,8 +315,7 @@
                             <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
                             <button onclick="document.getElementById('file-input').click()" class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2]">📖 のこしたデータをよむ</button>
                         </div>
-                        <!-- 修正箇所：hidden クラスを使わず、スタイルで非表示にしつつDOMに残す -->
-                        <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                        <input type="file" id="file-input" class="hidden" accept=".json" onchange="loadDataFile(this)">
                     </div>
                 </div>
             </div>
@@ -457,7 +458,7 @@
             <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
             <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
                 <div class="p-3 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
-                    <label class="text-xs font-black text-[#0277BD]">ISBN（13けたの すうじ）</label>
+                    <label class="text-xs font-black text-[#0277BD]">978ではじまるすうじをいれてください</label>
                     <div class="flex gap-2 mt-1 items-stretch">
                         <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
                         <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
@@ -481,7 +482,9 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 pt-3 border-t-2 mt-2 shrink-0 text-left">
+            
+            <p class="text-[10px] font-bold text-center text-gray-500 mt-2 mb-1">さがした本がまちがっていなかったら<br>きろく！をおします</p>
+            <div class="flex gap-3 pt-2 border-t-2 mt-0 shrink-0 text-left">
                 <button onclick="hideManualModal()" class="flex-1 py-3 text-gray-500 font-black text-lg hover:bg-gray-100 rounded-xl">やめる</button>
                 <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#0277BD]">きろく！</button>
             </div>
@@ -498,31 +501,19 @@
     <div id="notice-msg"></div>
 
     <script>
-        // --- 状態管理 ---
         const STORAGE_KEY_LOGS = 'reading_record_main_v1_logs';
         const STORAGE_KEY_GOALS = 'reading_record_main_v1_goals';
         
-        let logs = [];
-        let goals = {};
-        
-        try {
-            logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
-            goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
-        } catch(e) {
-            console.error("Storage load error", e);
-            logs = [];
-            goals = {};
-        }
-
+        let logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
+        let goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
         let isScannerRunning = false, isProcessingBarcode = false;
         let selectedYear = new Date().getFullYear(), selectedMonth = new Date().getMonth() + 1;
-        let audioCtx = null;
 
         const STAMPS = { 1: "🎍", 2: "❄️", 3: "🌸", 4: "🎒", 5: "🎏", 6: "💠", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
 
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep() {
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
                 osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
@@ -533,12 +524,7 @@
             } catch(e) {}
         }
 
-        window.onload = () => { 
-            try {
-                initDateSelectors(); 
-                renderAll();
-            } catch(e) { console.error("Window onload error", e); }
-        };
+        window.onload = () => { initDateSelectors(); renderAll(); };
 
         function initDateSelectors() {
             const yLog = document.getElementById('year-selector-log'), yStamp = document.getElementById('year-selector-stamp');
@@ -665,7 +651,7 @@
         function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
         function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
 
-        // --- 最強の検索ロジック (ページ数・金額取得 完全強化版) ---
+        // --- 最強の検索ロジック (ページ数・金額取得 徹底強化・完全復元版) ---
         async function searchBookData(isbn) {
             const la = document.getElementById('search-candidates');
             la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
@@ -682,7 +668,7 @@
                     res.author = cleanAuthorName(info.authors?.join(' ') || "");
                     if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
                     if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文もスキャン
+                    // 説明文の中からページ数を探す（最強ロジック）
                     if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
                 }
             }).catch(() => {});
@@ -720,26 +706,27 @@
                 const xmlDoc = parser.parseFromString(txt, "text/xml");
                 const item = xmlDoc.getElementsByTagName("item")[0];
                 if (item) {
-                    const t = item.getElementsByTagName("title")[0]?.textContent;
-                    if (!res.title) res.title = t || "";
+                    if (!res.title) res.title = item.getElementsByTagName("title")[0]?.textContent;
                     
-                    const descNode = item.getElementsByTagName("description")[0];
-                    if (descNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(descNode.textContent));
+                    const desc = item.getElementsByTagName("description")[0]?.textContent;
+                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
                     
-                    const extentNode = item.getElementsByTagName("extent")[0];
-                    if (extentNode) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extentNode.textContent));
+                    // extent (大きさ・容量) からページ数を抽出
+                    const extent = item.getElementsByTagName("extent")[0]?.textContent;
+                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
                     
-                    const priceNode = item.getElementsByTagName("price")[0];
-                    if (priceNode) priceCandidates.push(extractCleanNum(priceNode.textContent));
+                    const priceText = item.getElementsByTagName("price")[0]?.textContent;
+                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
                 }
             }).catch(() => {});
 
             await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
 
-            // 数字の選定 (大きい順にソートして最大値を採用)
+            // 候補の中から最も大きな数字を採用（-Infinity回避、0除外）
             const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
             
+            // ページ数は最大のものを採用（本文＋あとがき等が反映されやすいため）
             let finalPages = validPages.length > 0 ? validPages[0].toString() : "";
             let finalPrice = validPrices.length > 0 ? validPrices[0].toString() : "";
             
@@ -757,7 +744,7 @@
                 </div>`;
                 applyToForm(res.title, res.author, finalPages, finalPrice);
                 
-                // エラー枠表示
+                // 未取得項目を赤枠にする
                 if (!finalPages) document.getElementById('input-pages').classList.add('input-error');
                 if (!finalPrice) document.getElementById('input-price').classList.add('input-error');
                 
@@ -777,19 +764,15 @@
         function scanPageNumsDeeply(t) { 
             if(!t) return [];
             const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // ページ数、p、Pagesなどのパターンを網羅
-            const regex = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)|(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})/gi;
-            let match;
-            const results = [];
-            while ((match = regex.exec(text)) !== null) {
-                const num = parseInt(match[1] || match[2]);
-                if (!isNaN(num) && num > 5) results.push(num);
-            }
-            return results;
+            // 数字のあとにページ、p、頁、枚が続くパターン、または「ページ数: 123」のようなパターンを抽出
+            const matches = Array.from(text.matchAll(/(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})|(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)/gi));
+            // マッチしたグループ（1番目または2番目）から数字を取り出す
+            return matches.map(m => parseInt(m[1] || m[2])).filter(n => !isNaN(n) && n > 5);
         }
         
         function cleanAuthorName(s) { 
             if (!s) return ""; 
+            // 修正済み：正規表現のエラーを修正
             let c = s.replace(/\d{4}-\d{4}/g, '').replace(/[著編訳]|監修|ほか|イラスト/g, '').replace(/[／,，、．.\[\]\(\)（）]/g, ' ').trim(); 
             let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; 
             return p.filter(x => !p.some(o => o !== x && o.includes(x))).join(' ').trim(); 
@@ -800,6 +783,7 @@
             document.getElementById('input-author').value = a || ""; 
             document.getElementById('input-pages').value = p || ""; 
             document.getElementById('input-price').value = pr || "";
+            // エラー枠リセット
             ['input-title', 'input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
         }
 
@@ -807,6 +791,7 @@
         function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
         function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
 
+        // --- バーコード制御 ---
         function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
         function stopScanner() {
             isScannerRunning = false; isProcessingBarcode = false;
@@ -822,7 +807,6 @@
             if (isScannerRunning || typeof Quagga === 'undefined') return;
             const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
             try {
-                playBeep(); 
                 Quagga.init({
                     inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "10%", bottom: "10%" } },
                     decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }

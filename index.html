@@ -576,9 +576,9 @@
 
             } catch(e) {}
         }
-        
+
         function playBeep() {
-             try {
+            try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
@@ -934,21 +934,29 @@
         if(typeof Quagga !== 'undefined') {
             Quagga.onDetected(data => { 
                 const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13 || code.startsWith('192')) return;
-                isProcessingBarcode = true; 
-                try {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-                } catch(e){}
-
-                document.getElementById('success-overlay').style.display = "flex"; 
+                isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; 
                 setTimeout(() => { showManualModal(code); searchBookData(code); stopScanner(); }, 200); 
             });
         }
+
+        // 目標達成チェック
+        function checkGoalAchievement() {
+            const key = `${selectedYear}-${selectedMonth}`;
+            const goal = goals[key] || 10;
+            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
+            
+            if (monthlyLogs.length >= goal) {
+                confetti({
+                    particleCount: 200,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD700', '#FFA500', '#FF4500', '#FFFFFF'], 
+                    zIndex: 3000 
+                });
+                document.getElementById('goal-achieved-modal').classList.remove('hidden');
+            }
+        }
+
         function manualAddBook() {
             const t = document.getElementById('input-title').value.trim(), p = document.getElementById('input-pages').value.trim(), pr = document.getElementById('input-price').value.trim(), a = document.getElementById('input-author').value.trim();
             if(!t) { showNotice("なまえを いれてね"); return; }
@@ -958,6 +966,7 @@
                 if(!pr || pr==="0") document.getElementById('input-price').classList.add('input-error');
                 return; 
             }
+            
             const now = new Date();
             const recordDate = new Date(selectedYear, selectedMonth - 1, now.getDate());
 

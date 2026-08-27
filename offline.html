@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; script-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>つながっていません | どくしょ ちょきんばこ</title>
+<meta name="theme-color" content="#1F4C72">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<!-- アプリ本体と おなじ 配色・おなじ フォントで見せる。
+     ここで見た目が変わると「こわれた」と思われてしまう。 -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/offline.css">
+</head>
+<body class="offline-body">
+
+<main class="offline-card">
+  <svg class="offline-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"
+       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.6 8.6a16 16 0 0 1 18.8 0"/>
+    <path d="M5.6 12.2a11.5 11.5 0 0 1 12.8 0"/>
+    <path d="M8.8 15.8a7 7 0 0 1 6.4 0"/>
+    <circle cx="12" cy="19.4" r="1.1" fill="currentColor" stroke="none"/>
+    <path d="M3.4 3.4 20.6 20.6"/>
+  </svg>
+
+  <h1>いま インターネットに<br>つながって いません</h1>
+
+  <p class="offline-text">
+    Wi-Fi が つながって いるか たしかめて、<br>
+    もういちど ためして みてね。
+  </p>
+
+  <button class="btn btn-primary block" id="retry">もういちど ためす</button>
+
+  <p class="offline-note">
+    きろくは この きかいの なかに ちゃんと のこって います。<br>
+    つながったら つづきから できます。
+  </p>
+</main>
+
+<script src="js/offline.js"></script>
+</body>
+</html>

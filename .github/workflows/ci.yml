@@ -1,0 +1,43 @@
+name: CI
+
+# ⚠️ pull_request でも動かすこと。push: branches: [main] だけだと、
+#    PR の時点で落ちていることに気づけず、main に入ってから初めて分かる。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # 依存は入れない。品質ゲートも受け渡し口のテストも Node の標準機能だけで動く。
+      # npm ci すると playwright がブラウザを取りに行き、CI が重く・壊れやすくなる。
+      # 実ブラウザのテスト（npm run test:browser）は手元で回す。
+      - name: SW の版が中身と合っているか
+        run: node tools/build-sw.mjs --check
+      - name: 品質ゲート
+        run: node scripts/check-project.mjs
+      - name: 学習ログの受け渡し口のテスト
+        run: npm run test:records
+
+  # 正本コピー（standards-map.json に載るファイル）が
+  # GIGAyama.github.io/standards/ とずれていないか
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: GIGAyama/GIGAyama.github.io
+          path: .standards-src
+      - name: 正本とのずれ検知
+        run: node .standards-src/standards/check-drift.mjs --standards .standards-src/standards

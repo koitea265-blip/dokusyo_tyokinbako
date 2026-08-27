@@ -1,0 +1,64 @@
+{
+  "id": "/",
+  "name": "どくしょ ちょきんばこ",
+  "short_name": "どくしょちょきん",
+  "description": "よんだ本を バーコードで きろくして、さつ数・ページ数・きんがくを ためていく どくしょノートです。",
+  "lang": "ja",
+  "dir": "ltr",
+  "_comment_id": "このアプリは reading-books.giga-school.com という専用のドメイン（オリジン）で公開している。ドメインの直下がアプリの置き場所なので、id / scope / start_url は必ず / から始まる絶対パスにする（相対パスのままだと、URLの書き方ひとつで別アプリ扱いになる）。gigayama.github.io/Reading-Books/ で公開していたころは /Reading-Books/ を指していたが、専用ドメインに移したあとは / でないと、開いているページが scope の外になって manifest ごと無視され、インストールも起動もできなくなる。",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#F3F0E9",
+  "theme_color": "#1F4C72",
+  "categories": ["education", "books", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "本をきろくする",
+      "short_name": "きろく",
+      "url": "./?screen=scan",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "よんだ本のリスト",
+      "short_name": "リスト",
+      "url": "./?screen=list",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

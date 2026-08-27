@@ -1,0 +1,53 @@
+{
+  "files": [
+    {
+      "canonical": "sw/build-sw-static.mjs",
+      "local": "tools/build-sw.mjs"
+    },
+    {
+      "canonical": "records/records-export.js",
+      "local": "js/records-export.js",
+      "normalize": [
+        "app-id"
+      ]
+    },
+    {
+      "canonical": "records/records-export.html",
+      "local": "records-export.html",
+      "normalize": [
+        "app-name",
+        "records-export-import"
+      ]
+    },
+    {
+      "canonical": "records/records-hub-client.js",
+      "local": "js/records-hub-client.js"
+    },
+    {
+      "canonical": "records/records-export.test.mjs",
+      "local": "tests/records-export.test.mjs",
+      "normalize": [
+        "app-id",
+        "records-export-import"
+      ]
+    },
+    {
+      "canonical": "lib/giga-v5-checks.mjs",
+      "local": "scripts/lib/giga-v5-checks.mjs"
+    },
+    {
+      "canonical": "lib/run-giga-checks.mjs",
+      "local": "scripts/check-standard.mjs"
+    }
+  ],
+  "dirs": [
+    {
+      "canonical": "skills/devlog-article",
+      "local": ".claude/skills/devlog-article"
+    },
+    {
+      "canonical": "skills/note-article",
+      "local": ".claude/skills/note-article"
+    }
+  ]
+}

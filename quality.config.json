@@ -1,0 +1,128 @@
+{
+  "appName": "どくしょ ちょきんばこ",
+  "_comment_basePath": "公開URLの中で、このアプリの置き場所を表すパス。専用ドメイン（reading-books.giga-school.com）の直下に置いているので \"/\"。gigayama.github.io のように1つのオリジンを複数アプリで共有する場合は \"/リポジトリ名/\" にする。manifest の id / scope / start_url はここから始まっていなければならない。",
+  "basePath": "/",
+  "type": "A",
+  "entry": "index.html",
+  "manifest": "manifest.json",
+  "serviceWorker": "sw.js",
+  "iconsDir": "icons",
+  "requiredFiles": [
+    "LICENSE",
+    ".gitignore",
+    ".github/dependabot.yml",
+    "README.md",
+    "MANUAL.md",
+    "manifest.json",
+    "sw.js",
+    "offline.html",
+    "icons/icon-192.png",
+    "icons/icon-512.png",
+    "icons/icon-maskable-192.png",
+    "icons/icon-maskable-512.png",
+    "icons/apple-touch-icon-180.png"
+  ],
+  "sizeLimits": {
+    "iconAnyBytes": 61440,
+    "iconMaskableBytes": 61440,
+    "faviconBytes": 30720,
+    "imageBytes": 153600,
+    "sourceFileBytes": 409600,
+    "sourceFileLines": 5000,
+    "firstLoadScriptBytes": 307200
+  },
+  "connectSrcAllowed": [
+    "https://api.openbd.jp",
+    "https://www.googleapis.com",
+    "https://ndlsearch.ndl.go.jp"
+  ],
+  "contrast": {
+    "_comment": "css/style.css の :root から値を読んで、実際に文字として使う組み合わせだけを見る。地の色は「いちばん暗い地」を含める。",
+    "backgrounds": [
+      "--panel",
+      "--bg",
+      "--primary-tint",
+      "--secondary-tint",
+      "--accent-tint"
+    ],
+    "textTokens": [
+      "--text",
+      "--primary",
+      "--primary-deep",
+      "--ink-soft",
+      "--ink-faint",
+      "--danger",
+      "--purple"
+    ],
+    "minRatio": 4.5,
+    "pairs": [
+      {
+        "fg": "--panel",
+        "bg": "--primary",
+        "min": 4.5,
+        "note": "btn-primary の白文字"
+      },
+      {
+        "fg": "--panel",
+        "bg": "--secondary",
+        "min": 4.5,
+        "note": "btn-blue の白文字"
+      },
+      {
+        "fg": "--panel",
+        "bg": "--ok",
+        "min": 4.5,
+        "note": "btn-green の白文字"
+      },
+      {
+        "fg": "--panel",
+        "bg": "--danger",
+        "min": 4.5,
+        "note": "btn-danger の白文字"
+      },
+      {
+        "fg": "--panel",
+        "bg": "--purple",
+        "min": 4.5,
+        "note": "btn-purple の白文字"
+      },
+      {
+        "fg": "--text",
+        "bg": "--accent",
+        "min": 4.5,
+        "note": "えらんでいるタブ（金の地に すみ色）"
+      }
+    ]
+  },
+  "securityExceptions": [
+    {
+      "rule": "csp-meta-frame-ancestors-missing",
+      "reason": "frame-ancestors は <meta> では効かず、GitHub Pages は応答ヘッダーを足せない。同じことを js/pwa-early.js の中で window.top !== window.self を見て代替している。"
+    }
+  ],
+  "notApplicable": [
+    {
+      "check": "presentation-mode",
+      "reason": "一人ひとりの読書記録アプリで、一斉授業での提示を前提としない。個人の読書履歴を電子黒板に映すことは個人情報の観点からも推奨されない。"
+    },
+    {
+      "check": "server-guards",
+      "reason": "サーバー（GAS）を持たない A型。"
+    },
+    {
+      "check": "lock-service",
+      "reason": "同上。"
+    }
+  ],
+  "standard": {
+    "repoName": "Reading-Books",
+    "sw": "static",
+    "skips": [
+      {
+        "id": "E_OFFLINE_HTML",
+        "reason": "offline.html は offline.js / offline.css ごと先読みしており、再試行ボタンをスクリプトで実装する設計"
+      }
+    ],
+    "manifest": "manifest.json"
+  }
+}

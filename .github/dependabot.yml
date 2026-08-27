@@ -1,0 +1,10 @@
+# 依存の更新通知。
+# このアプリは npm パッケージを持たない単一HTML構成だが、
+# GitHub Actions（Pages へのデプロイ）だけは古くなると動かなくなるため監視する。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5

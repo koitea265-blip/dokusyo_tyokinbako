@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="どくしょ ちょきんばこ">
+  <!--
+    どくしょ ちょきんばこ のアイコン（PNG 版と おなじ絵がら・おなじ色み）。
+      ・ぬりは アプリの6トークンと おなじ色みだけ
+        panel #FFFFFF ／ text(すみ色) #14283C ／ primary(ふかい あい) #1F4C72
+        accent(きん) #D9AE58 ／ ok(みどり) #4A7C59
+      ・輪郭は太く（12〜13px）、色は text
+      ・グラデーション・ぼかし影は使わず、影は「段差」で表す
+    かきじゅん：うしろ（みみ・あし・しっぽ）→ 本 → コイン
+  -->
+
+  <rect width="512" height="512" fill="#FFFFFF"/>
+
+  <g stroke="#14283C" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- ============ ちょきんばこ（ぶた）の からだ ============ -->
+    <!-- みみ -->
+    <path d="M138 216c-16-40 4-64 36-50l32 46z" fill="#2C5B80"/>
+    <path d="M374 216c16-40-4-64-36-50l-32 46z" fill="#2C5B80"/>
+    <!-- しっぽ -->
+    <path d="M400 288c40-20 56 26 28 38s-32-28 4-34" fill="none"/>
+    <!-- あし -->
+    <path d="M144 386h48v82h-48z" fill="#2C5B80"/>
+    <path d="M212 386h48v82h-48z" fill="#2C5B80"/>
+    <path d="M280 386h48v82h-48z" fill="#2C5B80"/>
+    <path d="M348 386h48v82h-48z" fill="#2C5B80"/>
+
+    <!-- ============ 本（ちょきんばこ の 本たい）============ -->
+    <!-- ページの小口＝段差（みどりの アクセント） -->
+    <rect x="128" y="230" width="292" height="190" rx="28" fill="#4A7C59"/>
+    <!-- 表紙 -->
+    <rect x="110" y="212" width="292" height="190" rx="28" fill="#1F4C72" stroke-width="13"/>
+    <!-- せぼね -->
+    <path d="M110 240a28 28 0 0 1 28-28h20v190h-20a28 28 0 0 1-28-28z" fill="#123A5A" stroke-width="13"/>
+
+  </g>
+
+  <!-- 表紙の きんの わく と 題字 -->
+  <rect x="184" y="244" width="188" height="126" rx="12" fill="none" stroke="#D9AE58" stroke-width="10"/>
+  <g fill="#D9AE58">
+    <rect x="212" y="278" width="132" height="14" rx="7"/>
+    <rect x="212" y="304" width="132" height="14" rx="7"/>
+    <rect x="238" y="330" width="80"  height="14" rx="7"/>
+  </g>
+
+  <!-- コインの いれぐち -->
+  <rect x="196" y="196" width="120" height="32" rx="16" fill="#14283C"/>
+
+  <!-- ============ コイン（ためていく「ちょきん」）============ -->
+  <g transform="translate(256 100)">
+    <!-- ひかり -->
+    <g stroke="#D9AE58" stroke-width="12" stroke-linecap="round">
+      <path d="M-94 -14h-26"/><path d="M94 -14h26"/>
+      <path d="m-76 -58-18-18"/><path d="m76 -58 18-18"/>
+      <path d="M0 -82v-26"/>
+    </g>
+    <circle cy="9" r="54" fill="#14283C"/>
+    <circle r="54" fill="#E9C36C" stroke="#14283C" stroke-width="13"/>
+    <circle r="39" fill="none" stroke="#B8913F" stroke-width="7"/>
+    <g fill="none" stroke="#14283C" stroke-width="11" stroke-linecap="round">
+      <path d="m-18 -21 18 20 18-20"/>
+      <path d="M0 -1v23"/>
+      <path d="M-16 5h32"/>
+      <path d="M-16 17h32"/>
+    </g>
+  </g>
+</svg>

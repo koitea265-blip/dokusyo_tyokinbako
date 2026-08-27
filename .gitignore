@@ -1,0 +1,22 @@
+# 依存とビルド成果物
+node_modules/
+dist/
+build/
+
+# 秘密情報（絶対にコミットしない）
+.clasp.json
+.env
+.env.*
+*.pem
+*.key
+
+# 画像圧縮の前に退避した元ファイル（P2 で使う。配布物には含めない）
+.assets-original/
+
+# OS・エディタが勝手に作るもの
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/

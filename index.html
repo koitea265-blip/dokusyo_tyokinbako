@@ -1,996 +1,499 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>どくしょ　ちょきんばこ</title>
-    <!-- 外部ライブラリの読み込み -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --app-bg: #FFFAF0;
-            --header-bg: #FFCCBC;
-            --header-gradient: linear-gradient(180deg, #FFCCBC 0%, #FFAB91 100%);
-            --border-color: #FFAB91;
-            --text-main: #D84315;
-        }
+<meta charset="UTF-8">
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: var(--app-bg);
-            color: #4E342E;
-            font-family: 'Zen Maru Gothic', sans-serif;
-            -webkit-text-size-adjust: 100%;
-        }
+<!-- ① インストールの合図を「いちばん先に」うけとる。
+     Chrome は条件がそろうと すぐに beforeinstallprompt を出すため、
+     ほかの読み込みより後ろに置くと合図を取りこぼし、
+     通信のおそい端末で「インストール」ボタンが出なくなる。 -->
+<script src="js/pwa-early.js"></script>
 
-        /* --- メインコンテナ（縦長固定・レスポンシブ対応） --- */
-        .app-container {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%;
-            height: 100%;
-            max-width: 420px; /* 常にスマホ幅で固定 */
-            margin: 0 auto;
-            background-color: white;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            padding-top: max(10px, env(safe-area-inset-top, 10px));
-            border-left: 1px solid #EEE;
-            border-right: 1px solid #EEE;
-        }
+<!-- ② 外へ出ていく通信を、必要な3つの書誌サービスだけに しぼる。
+     フォントも画像もスクリプトも すべて自分のサーバーから配っているので、
+     ここに書いた以外への通信はブラウザが遮断する。
 
-        header {
-            background: var(--header-gradient);
-            padding: 0.35rem 0.75rem;
-            text-align: center;
-            flex-shrink: 0;
-            border-bottom: 3px solid var(--border-color);
-            box-shadow: 0 2px 10px rgba(216, 67, 21, 0.1);
-        }
+     style-src も script-src も 'unsafe-inline' なしの きびしい設定。
+     そのために style="..." の じか書きを すべて やめ、
+     css/style.css の 補助クラスに 置きかえてある。
+     大きさが そのつど 変わるところ（グラフの棒の高さ・進み具合のバー）は
+     JavaScript から element.style で 動かしている。
+     こちらは CSSOM の操作なので CSP の対象外。 -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self';
+  style-src 'self';
+  img-src 'self' data: blob:;
+  font-src 'self';
+  media-src 'self' blob:;
+  worker-src 'self';
+  manifest-src 'self';
+  connect-src 'self' https://api.openbd.jp https://www.googleapis.com https://ndlsearch.ndl.go.jp;
+  frame-src 'self' https://gamification.giga-school.com;
+  base-uri 'self';
+  form-action 'none';
+  object-src 'none'">
+<!-- frame-ancestors は <meta> では効かない（ブラウザが無視して警告を出す）。
+     ほかのサイトに iframe で はめこまれるのを ふせぐのは、
+     GitHub Pages が返す X-Frame-Options ではできないため、
+     ここでは同じことを JavaScript 側（js/pwa-early.js）で見はる。 -->
 
-        .fancy-title {
-            font-size: 1.55rem;
-            color: var(--text-main);
-            font-weight: 900;
-            text-shadow: 2px 2px 0px white, -1px -1px 0px white, 1px -1px 0px white, -1px 1px 0px white, 3px 3px 5px rgba(216, 67, 21, 0.3);
-            letter-spacing: 0.05em;
-        }
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>どくしょ ちょきんばこ | GIGA山</title>
+<meta name="description" content="よんだ本を バーコードで きろくして、さつ数・ページ数・きんがくを ためていく どくしょノートです。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GIGA school">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="どくしょ ちょきんばこ | GIGA山">
+<meta property="og:description" content="よんだ本を バーコードで きろくして、さつ数・ページ数・きんがくを ためていく どくしょノートです。">
+<meta property="og:url" content="https://reading-books.giga-school.com/">
+<meta property="og:image" content="https://giga-school.com/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GIGA school｜学校で使える Web アプリ">
+<meta name="twitter:card" content="summary_large_image">
 
-        .bounce-icon {
-            display: inline-block;
-            animation: welcome-bounce 1.2s ease-out 1;
-        }
-        @keyframes welcome-bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px) rotate(-5deg); }
-            60% { transform: translateY(-4px) rotate(5deg); }
-        }
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F4C72">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<!-- iOS(Safari)から「ホーム画面に追加」したときにアプリとして起動するための指定 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="どくしょちょきん">
+<meta name="format-detection" content="telephone=no">
 
-        /* --- タブ管理 --- */
-        .tab-content { display: none; height: 100%; overflow: hidden; }
-        .tab-content.active { display: flex; flex-direction: column; }
-        #tab-log, #tab-stamp { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-
-        /* ホーム画面レイアウト */
-        #tab-home.active { 
-            justify-content: stretch; 
-            padding: 0;
-            overflow-y: hidden;
-            gap: 0;
-            flex-direction: column; /* 常に縦並び */
-        }
-
-        /* セクション分割設定 */
-        .section-half {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            padding: 0.35rem;
-            box-sizing: border-box;
-            overflow: hidden;
-            height: 50%;
-            width: 100%;
-        }
-
-        /* --- 貯金箱エリア --- */
-        .chokin-card {
-            background-color: #FFF3E0;
-            border-radius: 1rem;
-            border: 2px solid #FFB74D;
-            padding: 0.4rem;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .chokin-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        .chokin-box {
-            flex: 1;
-            background-color: white;
-            border-radius: 0.7rem;
-            border: 2.5px solid #FFB74D;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 0;
-            padding: 2px 4px;
-            overflow: hidden;
-        }
-
-        .chokin-label { 
-            font-size: clamp(12px, 2.2vh, 15px); 
-            font-weight: 900; 
-            color: #5D4037; 
-            line-height: 1.1; 
-            margin-top: 6px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-        }
-        
-        .chokin-value-row { 
-            display: flex; 
-            align-items: baseline; 
-            gap: 3px; 
-            margin-top: -2px;
-            margin-bottom: 4px;
-        }
-        .chokin-value { font-size: clamp(24px, 4.5vh, 46px); font-weight: 900; color: #E64A19; line-height: 1; }
-        .chokin-unit { font-size: clamp(11px, 1.6vh, 16px); font-weight: 900; color: #8D6E63; }
-
-        .home-action-buttons {
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            margin-top: 0.3rem;
-        }
-
-        .btn-clear {
-            display: flex; align-items: center; justify-content: center; gap: 4px;
-            border-radius: 0.5rem; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.1s;
-        }
-        .btn-clear:active { transform: scale(0.97); }
-
-        /* --- カメラエリア --- */
-        #interactive.viewport {
-            position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden;
-            border-radius: 0.8rem; background-color: #E3F2FD; display: flex;
-            justify-content: center; align-items: center; border: 2px solid #FFF; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-        }
-        #interactive.viewport video { position: absolute; width: 100% !important; height: 100% !important; object-fit: cover; z-index: 10; }
-        #scanner-cover { position: absolute; inset: 0; background-color: #E1F5FE; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
-        #success-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-
-        /* スキャン用ガイド */
-        .scan-frame {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; height: 60%; z-index: 30; pointer-events: none;
-        }
-        .scan-corner { position: absolute; width: 10px; height: 10px; border-color: #FF5252; border-style: solid; border-width: 0; }
-        .tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 3px 0 0 0; }
-        .tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 3px 0 0; }
-        .bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 3px; }
-        .br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 3px 0; }
-        
-        .scan-line {
-            position: absolute; top: 50%; left: 0; width: 100%; height: 2px;
-            background-color: #FF1744; box-shadow: 0 0 4px #FF1744; z-index: 31;
-            animation: scan-move 2s infinite ease-in-out;
-        }
-        @keyframes scan-move {
-            0% { top: 20%; opacity: 0.3; }
-            50% { top: 50%; opacity: 1; }
-            100% { top: 80%; opacity: 0.3; }
-        }
-
-        .nav-btn.active { color: #FF7043; background: #FFF0F0; border-top: 4px solid #FF7043; }
-
-        /* --- 共通・リスト・スタンプ --- */
-        .unified-header-row {
-            display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
-            padding: 0.3rem 0.6rem; background: white; border-radius: 0.8rem; border: 2px solid #FFCCBC;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); flex-wrap: nowrap; white-space: nowrap; flex-shrink: 0;
-        }
-        .unified-summary-box { display: flex; align-items: center; gap: 2px; padding-left: 0.4rem; border-left: 2px solid #FFAB91; }
-        .list-guide-msg {
-            background-color: #FFF9C4; color: #795548; font-size: 10px; font-weight: 900;
-            text-align: center; padding: 4px; border-radius: 6px; margin-top: 4px; border: 1px dashed #FFD54F;
-        }
-        .date-selectors { display: flex; gap: 0.2rem; align-items: center; flex-wrap: nowrap; justify-content: center; }
-        select {
-            appearance: none; background-color: white; border: 2px solid #FFAB91; border-radius: 6px;
-            padding: 1px 6px; font-weight: bold; color: #D84315; font-size: 12px; outline: none; cursor: pointer;
-        }
-        .goal-input {
-            width: 38px; text-align: center; font-weight: 900; color: #FF7043; font-size: 1rem;
-            background: #FFF; border: 2px solid #FFAB91; border-radius: 6px; outline: none; padding: 1px 0;
-        }
-        .stamp-grid {
-            display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
-            background-color: white; padding: 5px; border-radius: 0.7rem; border: 2px solid #FFCCBC;
-        }
-        .stamp-cell {
-            aspect-ratio: 1; border: 1px dashed #FFCCBC; border-radius: 0.3rem;
-            display: flex; align-items: center; justify-content: center; font-size: 34px; line-height: 1;
-            background-color: #FFFAF0; overflow: hidden;
-        }
-        .stamp-cell.filled { border-style: solid; background-color: #FFF0F0; animation: stamp-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .section-title-top { font-size: 0.8rem; font-weight: 900; color: #E65100; }
-        .current-date-title { font-size: 1.05rem; font-weight: 900; color: #D84315; margin-top: 0.2rem; text-align: center; }
-
-        /* 通知メッセージ */
-        #notice-msg {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(200%);
-            background: rgba(62, 39, 35, 0.95); color: white;
-            padding: 12px 24px; font-size: 14px; text-align: center; font-weight: bold;
-            z-index: 10000; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border-radius: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            width: auto; min-width: 200px;
-            opacity: 0; visibility: hidden; pointer-events: none;
-        }
-        #notice-msg.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
-        
-        /* エラー時の赤枠 */
-        .input-error { border-color: #EF4444 !important; background-color: #FEF2F2 !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
-
-        /* ロードエラー時の表示 */
-        #load-error-msg {
-            position: fixed; inset: 0; background: white; z-index: 99999;
-            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
-        }
-
-        /* 達成時のプログレスバー */
-        .progress-gold {
-            background: linear-gradient(to right, #FFD700, #FDB931) !important;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-        }
-    </style>
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-    <div id="load-error-msg">
-        <p class="text-4xl mb-4">😢</p>
-        <h2 class="text-xl font-bold text-red-500 mb-2">プログラムが よみこめませんでした</h2>
-        <p class="text-sm text-gray-600">インターネットに つながっているか<br>かくにん してください。</p>
-        <button onclick="location.reload()" class="mt-6 px-6 py-3 bg-blue-500 text-white rounded-xl font-bold shadow-md">もういちど やってみる</button>
+<!-- 画面で つかう アイコン。ここに おいた <symbol> を <use> で よび出す -->
+<svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true" focusable="false">
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 18.5 8.5 12 15 5.5"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 5.5 6.5 6.5L9 18.5"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H4.5"/><path d="M11 19 4 12l7-7"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m2.8 10.3 9.2-7.6 9.2 7.6"/><path d="M5.4 9.2V20.4h13.2V9.2"/><path d="M9.7 20.4V14h4.6v6.4"/></symbol>
+<symbol id="i-library" viewBox="0 0 24 24"><rect x="3.2" y="5.4" width="3.8" height="15.2" rx="1.1"/><rect x="7.9" y="5.4" width="3.8" height="15.2" rx="1.1"/><path d="m15.5 6 4 1.1-3.5 13-4-1.1z"/></symbol>
+<symbol id="i-stamp" viewBox="0 0 24 24"><circle cx="12" cy="8.6" r="5.8"/><path d="M8.2 13.6 7 21.4l5-2.7 5 2.7-1.2-7.8"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><rect x="2.8" y="3.6" width="18.4" height="4.6" rx="1.6"/><path d="M4.8 8.2v10.9a1.7 1.7 0 0 0 1.7 1.7h11a1.7 1.7 0 0 0 1.7-1.7V8.2"/><path d="M10 12.2h4"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.9C10.9 5.2 8.9 4.2 6.6 4.2H2.8v12.9h3.8c2.3 0 4.3 1 5.4 2.7z"/><path d="M12 6.9c1.1-1.7 3.1-2.7 5.4-2.7h3.8v12.9h-3.8c-2.3 0-4.3 1-5.4 2.7z"/></symbol>
+<symbol id="i-book-plus" viewBox="0 0 24 24"><path d="M4.8 4.2A2 2 0 0 1 6.8 2.2h12.4v15.6H6.8a2 2 0 0 0-2 2z"/><path d="M4.8 19.8a2 2 0 0 0 2 2h12.4v-4"/><path d="M12 6.4v5.6"/><path d="M9.2 9.2h5.6"/></symbol>
+<symbol id="i-book-check" viewBox="0 0 24 24"><path d="M4.8 4.2A2 2 0 0 1 6.8 2.2h12.4v15.6H6.8a2 2 0 0 0-2 2z"/><path d="M4.8 19.8a2 2 0 0 0 2 2h12.4v-4"/><path d="m9 9.4 2.2 2.2 4-4"/></symbol>
+<symbol id="i-guide" viewBox="0 0 24 24"><path d="M4.8 4.2A2 2 0 0 1 6.8 2.2h12.4v15.6H6.8a2 2 0 0 0-2 2z"/><path d="M4.8 19.8a2 2 0 0 0 2 2h12.4v-4"/><path d="M10.2 7.4a1.9 1.9 0 0 1 3.6.7c0 1.3-1.8 1.6-1.8 2.7"/><path d="M12 13.7h.01"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="m8.7 7.4 3.3 3.9 3.3-3.9"/><path d="M12 11.3V17"/><path d="M9 12.7h6"/><path d="M9 15h6"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M3.7 8.4h3.1l1.6-2.5h7.2l1.6 2.5h3.1a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H3.7a1.6 1.6 0 0 1-1.6-1.6V10a1.6 1.6 0 0 1 1.6-1.6Z"/><circle cx="12" cy="13.6" r="3.5"/></symbol>
+<symbol id="i-barcode" viewBox="0 0 24 24"><path d="M2.8 8V5.6a2 2 0 0 1 2-2h2.4"/><path d="M16.8 3.6h2.4a2 2 0 0 1 2 2V8"/><path d="M21.2 16v2.4a2 2 0 0 1-2 2h-2.4"/><path d="M7.2 20.4H4.8a2 2 0 0 1-2-2V16"/><path d="M7.4 8v8"/><path d="M12 8v8"/><path d="M16.6 8v8"/></symbol>
+<symbol id="i-keypad" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3.2"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M15.4 4.7 19.3 8.6"/><path d="M17.1 3a2.2 2.2 0 0 1 3.1 3.1L8.3 18 3.4 20.6l2.6-4.9z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.9"/><path d="m20.2 20.2-4.5-4.5"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="M12 6.9v5.4l3.5 2"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M3.4 3v17.6h17.2"/><path d="m6.9 15.4 3.9-4.5 3.2 3 4.8-6.1"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5"/></symbol>
+<symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.4"/><path d="M3 9.4h18"/><path d="M3 14.8h18"/><path d="M9.4 9.4V20"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M2.8 7.4a1.7 1.7 0 0 1 1.7-1.7h4.1l2.1 2.6h8.6a1.7 1.7 0 0 1 1.7 1.7v8.6a1.7 1.7 0 0 1-1.7 1.7H4.5a1.7 1.7 0 0 1-1.7-1.7z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M12 3.2v11.2"/><path d="m7.5 10.2 4.5 4.5 4.5-4.5"/><path d="M4 16.8v2.6a1.6 1.6 0 0 0 1.6 1.6h12.8a1.6 1.6 0 0 0 1.6-1.6v-2.6"/></symbol>
+<symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.4h10V9"/><path d="M7 18H5.4A1.4 1.4 0 0 1 4 16.6v-5.2A1.4 1.4 0 0 1 5.4 10h13.2a1.4 1.4 0 0 1 1.4 1.4v5.2a1.4 1.4 0 0 1-1.4 1.4H17"/><path d="M7 14.6h10v6H7z"/></symbol>
+<symbol id="i-install" viewBox="0 0 24 24"><rect x="6" y="2.4" width="12" height="19.2" rx="2.6"/><path d="M12 6.6v6.6"/><path d="m9.4 10.9 2.6 2.6 2.6-2.6"/><path d="M10.4 18.6h3.2"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15.2V2.8"/><path d="m8.2 6.6 3.8-3.8 3.8 3.8"/><path d="M6.6 10.8H5a2 2 0 0 0-2 2v6.4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6.4a2 2 0 0 0-2-2h-1.6"/></symbol>
+<symbol id="i-flash" viewBox="0 0 24 24"><path d="M13.2 2.4 4.4 13.5h6.7L10.8 21.6l8.8-11.1h-6.7z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 6.4h16"/><path d="M9.4 6.4V4.2A1.3 1.3 0 0 1 10.7 3h2.6a1.3 1.3 0 0 1 1.3 1.2v2.2"/><path d="m6.5 6.4.9 13.5a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-13.5"/><path d="M10.2 10.4v6.7"/><path d="M13.8 10.4v6.7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="m7.9 12.2 2.8 2.8 5.4-5.4"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="M9.3 9.5a2.7 2.7 0 0 1 5.3.7c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.4h.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.1"/><path d="M12 11v5.6"/><path d="M12 7.6h.01"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 2.7 17.2a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9.2v4.3"/><path d="M12 17.1h.01"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2.6 7.6 3v6.1c0 4.6-3.2 8-7.6 9.7-4.4-1.7-7.6-5.1-7.6-9.7V5.6z"/><rect x="9.4" y="11.6" width="5.2" height="4.2" rx="1"/><path d="M10.6 11.6v-1.4a1.4 1.4 0 0 1 2.8 0v1.4"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8.8a6 6 0 1 0-12 0c0 6-2.2 7.4-2.2 7.4h16.4S18 14.8 18 8.8"/><path d="M13.7 19.6a2 2 0 0 1-3.4 0"/></symbol>
+<symbol id="i-bell-off" viewBox="0 0 24 24"><path d="M17.9 9.2a6 6 0 0 0-9-5.4"/><path d="M6.1 6.4A6 6 0 0 0 6 8.8c0 6-2.2 7.4-2.2 7.4h12.6"/><path d="M13.7 19.6a2 2 0 0 1-3.4 0"/><path d="m3 3 18 18"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6.4 4.4H4.2a2.4 2.4 0 0 0 2.2 4.8"/><path d="M17.6 4.4h2.2a2.4 2.4 0 0 1-2.2 4.8"/><path d="M6.4 2.6h11.2v6.2a5.6 5.6 0 1 1-11.2 0z"/><path d="M12 14.4v3.2"/><path d="M8.2 21.4h7.6"/><path d="M9.6 17.6h4.8l1.4 3.8H8.2z"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.1 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></symbol>
+<symbol id="i-m1" viewBox="0 0 24 24"><path d="M12 3.4v2.4"/><path d="m5.4 7.4 1.7 1.7"/><path d="m18.6 7.4-1.7 1.7"/><path d="M7.6 16.2a4.4 4.4 0 0 1 8.8 0"/><path d="M2.8 16.2h18.4"/><path d="M5.4 19.8h13.2"/></symbol>
+<symbol id="i-m2" viewBox="0 0 24 24"><path d="M12 2.8v18.4"/><path d="m4 7.4 16 9.2"/><path d="m4 16.6 16-9.2"/><path d="m9.2 5.2 2.8 2.8 2.8-2.8"/><path d="m9.2 18.8 2.8-2.8 2.8 2.8"/></symbol>
+<symbol id="i-m3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.1"/><ellipse cx="12" cy="6.7" rx="2.6" ry="3.5"/><ellipse cx="12" cy="17.3" rx="2.6" ry="3.5"/><ellipse cx="6.7" cy="12" rx="3.5" ry="2.6"/><ellipse cx="17.3" cy="12" rx="3.5" ry="2.6"/></symbol>
+<symbol id="i-m4" viewBox="0 0 24 24"><path d="M7 20.6h10"/><path d="M12 20.6V9.2"/><path d="M12 9.2C12 5.8 9.2 3 5.8 3c0 3.4 2.8 6.2 6.2 6.2"/><path d="M12 11.4c0-2.9 2.3-5.2 5.2-5.2 0 2.9-2.3 5.2-5.2 5.2"/></symbol>
+<symbol id="i-m5" viewBox="0 0 24 24"><path d="M16.4 12c0 3-3.3 5.6-7 5.6-1.5 0-2.9-.4-4.1-1.1.6-1.4.9-2.9.9-4.5s-.3-3.1-.9-4.5c1.2-.7 2.6-1.1 4.1-1.1 3.7 0 7 2.6 7 5.6"/><path d="M16.4 12 21 8.1v7.8z"/><path d="M12.4 10.2h.01"/></symbol>
+<symbol id="i-m6" viewBox="0 0 24 24"><path d="M12 12v7.4a2.1 2.1 0 0 0 4.2 0"/><path d="M2.8 12a9.2 9.2 0 0 1 18.4 0z"/></symbol>
+<symbol id="i-m7" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.4v2.3"/><path d="M12 19.3v2.3"/><path d="m4.8 4.8 1.7 1.7"/><path d="m17.5 17.5 1.7 1.7"/><path d="M2.4 12h2.3"/><path d="M19.3 12h2.3"/><path d="m4.8 19.2 1.7-1.7"/><path d="m17.5 6.5 1.7-1.7"/></symbol>
+<symbol id="i-m8" viewBox="0 0 24 24"><path d="M2.6 8.2c1.9-2 3.8-2 5.7 0s3.8 2 5.7 0 3.8-2 5.7 0"/><path d="M2.6 13.2c1.9-2 3.8-2 5.7 0s3.8 2 5.7 0 3.8-2 5.7 0"/><path d="M2.6 18.2c1.9-2 3.8-2 5.7 0s3.8 2 5.7 0 3.8-2 5.7 0"/></symbol>
+<symbol id="i-m9" viewBox="0 0 24 24"><path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8 8.6 8.6 0 1 0 20.2 14.6"/></symbol>
+<symbol id="i-m10" viewBox="0 0 24 24"><path d="M5.2 20.8V10.4a6.8 6.8 0 0 1 13.6 0v10.4l-2.3-1.8-2.2 1.8-2.3-1.8-2.3 1.8-2.2-1.8z"/><path d="M9.6 10.2h.01"/><path d="M14.4 10.2h.01"/></symbol>
+<symbol id="i-m11" viewBox="0 0 24 24"><path d="M11 20.4A7 7 0 0 1 9.8 6.5C15.5 5.4 17 4.9 19 2.4c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10"/><path d="M2.6 21.4c0-3 1.9-5.4 5.1-6 2.4-.5 4.9-2 5.9-3"/></symbol>
+<symbol id="i-m12" viewBox="0 0 24 24"><path d="m12 2.6 4.4 6.6H7.6z"/><path d="m12 7.8 5.8 7.8H6.2z"/><path d="M12 15.6v5.8"/><path d="M8.9 21.4h6.2"/></symbol>
+</svg>
+
+<div class="app" id="app">
+
+  <header class="app-header">
+    <div class="hdr-slot">
+      <button class="hdr-btn" id="hdr-back" hidden aria-label="まえのがめんに もどる"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-left"></use></svg>もどる</button>
     </div>
-
-    <div class="app-container">
-        <header>
-            <h1 class="fancy-title flex items-center justify-center gap-3 leading-none">
-                <span class="text-3xl bounce-icon">📖</span> どくしょ　ちょきんばこ
-            </h1>
-        </header>
-
-        <!-- 【ホーム】 -->
-        <main id="tab-home" class="tab-content active flex-1">
-            <div class="section-half">
-                <div class="chokin-card">
-                    <div class="flex justify-between items-center mb-1 shrink-0 px-1">
-                        <h3 class="section-title-top">いままでによんだほんのちょきん</h3>
-                        <button onclick="showResetConfirm()" class="px-2 py-0.5 bg-white border border-red-400 rounded-full text-[8px] font-black text-red-500 active:scale-95 shadow-sm">♻️ リセット</button>
-                    </div>
-                    
-                    <div class="chokin-grid">
-                        <div class="chokin-box">
-                            <span class="chokin-label">よんだ本のかず</span>
-                            <div class="chokin-value-row">
-                                <span class="chokin-value" id="total-books-count">0</span>
-                                <span class="chokin-unit">さつ</span>
-                            </div>
-                        </div>
-                        <div class="chokin-box">
-                            <span class="chokin-label">よんだページのごうけい</span>
-                            <div class="chokin-value-row">
-                                <span class="chokin-value" id="total-pages-count">0</span>
-                                <span class="chokin-unit">ページ</span>
-                            </div>
-                        </div>
-                        <div class="chokin-box">
-                            <span class="chokin-label">よんだ本のごうけいきんがく</span>
-                            <div class="chokin-value-row">
-                                <span class="chokin-value" id="total-price-count">0</span>
-                                <span class="chokin-unit">えん</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="home-action-buttons">
-                        <button id="btn-copy" onclick="copyForSpreadsheet()" class="btn-clear w-full py-1 bg-[#4CAF50] text-white text-[10px] border-b-2 border-[#2E7D32]">
-                            📊 表(ひょう)にするためのコピー
-                        </button>
-                        <div class="flex gap-1 relative">
-                            <button onclick="saveDataFile()" class="btn-clear flex-1 py-1.5 bg-[#42A5F5] text-white text-[9px] border-b-2 border-[#1E88E5]">💾 データをのこす(ほぞん)</button>
-                            <!-- 修正箇所：ボタン風の見た目の中に、透明なinputを配置（スマホ対応） -->
-                            <div class="btn-clear flex-1 py-1.5 bg-[#9575CD] text-white text-[9px] border-b-2 border-[#7E57C2] relative text-center flex items-center justify-center cursor-pointer">
-                                📖 のこしたデータをよむ
-                                <input type="file" id="file-input" accept=".json" onchange="loadDataFile(this)" 
-                                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 50;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-half">
-                <div class="bg-[#E1F5FE] rounded-[1rem] p-2 border-2 border-solid border-[#4FC3F7] flex flex-col relative flex-1 min-h-0">
-                    <div class="flex w-full justify-between items-center mb-1 shrink-0">
-                        <p class="text-[0.8rem] font-black text-[#0288D1]">バーコードよみとりカメラ</p>
-                        <button onclick="showHelp()" class="px-2 py-0.5 bg-white border border-[#4FC3F7] rounded-full text-[8px] font-black text-[#0288D1] active:scale-95 shadow-sm">❓ つかいかた</button>
-                    </div>
-
-                    <div id="interactive" class="viewport shadow-sm relative flex-1">
-                        <div id="scanner-cover">
-                            <svg class="w-8 h-8 text-blue-300" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm10 7a2 2 0 10-4 0 2 2 0 004 0zm2 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                            </svg>
-                        </div>
-                        <div id="guide-box" class="scan-frame hidden">
-                            <div class="scan-corner tl"></div><div class="scan-corner tr"></div>
-                            <div class="scan-corner bl"></div><div class="scan-corner br"></div>
-                            <div class="scan-line"></div>
-                        </div>
-                        <div id="success-overlay">
-                            <div class="text-3xl animate-bounce">✅</div>
-                            <p class="font-bold text-blue-600 text-xs">よめました！</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex w-full gap-2 mt-2 shrink-0">
-                        <button onclick="toggleScanner()" class="flex-[1] h-11 bg-[#29B6F6] hover:bg-[#039BE5] text-white rounded-[0.8rem] font-black text-[11px] shadow border-b-4 border-[#0277BD] flex flex-col items-center justify-center leading-tight">
-                            <span class="text-base">📷</span> 
-                            <span id="btn-text">カメラでバーコードをよむ</span>
-                        </button>
-                        <button onclick="showManualModal('')" class="flex-[1] h-11 bg-white border-2 border-[#29B6F6] text-[#0277BD] rounded-[0.8rem] flex flex-col items-center justify-center active:scale-95 min-w-[65px] shadow-sm leading-tight">
-                            <span class="text-base">🔢</span>
-                            <span class="text-[10px] font-black">本のばんごうをいれる</span>
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-gray-400 text-center mt-2 font-bold shrink-0">
-                        ©2026　どくしょ　ちょきんばこ　ＩＣＴ支援の杜
-                    </p>
-                </div>
-            </div>
-        </main>
-
-        <!-- 【リスト】 -->
-        <main id="tab-log" class="tab-content flex-1 p-3 gap-1 no-scrollbar overflow-y-auto">
-            <div class="unified-header-row shrink-0">
-                <div class="date-selectors">
-                    <select id="year-selector-log" onchange="syncDateAndRender(this.value, 'year')"></select>
-                    <select id="month-selector-log" onchange="syncDateAndRender(this.value, 'month')"></select>
-                </div>
-                <div class="unified-summary-box">
-                    <span class="text-[8px] font-black text-gray-400">こんげつよんだ本のかず:</span>
-                    <span class="text-base font-black text-[#E64A19]"><span id="log-monthly-books">0</span><span class="text-[10px] ml-0.5">さつ</span></span>
-                </div>
-            </div>
-            <div class="list-guide-msg">まちがえたときは「❌」をおすと けせるよ</div>
-            <div id="log-month-header" class="current-date-title"></div>
-            <div id="book-list" class="space-y-1 mt-1 pb-4"></div>
-        </main>
-
-        <!-- 【スタンプ】 -->
-        <main id="tab-stamp" class="tab-content flex-1 p-3 gap-1 no-scrollbar overflow-y-auto">
-            <div class="unified-header-row shrink-0">
-                <div class="date-selectors">
-                    <select id="year-selector-stamp" onchange="syncDateAndRender(this.value, 'year')"></select>
-                    <select id="month-selector-stamp" onchange="syncDateAndRender(this.value, 'month')"></select>
-                </div>
-                <div class="flex items-center gap-1 border-l-2 border-orange-100 pl-2">
-                    <span class="font-black text-[10px] text-[#5D4037]">もくひょう:</span>
-                    <input type="number" id="target-goal-input" class="goal-input" value="10" onchange="updateGoal(this.value)">
-                    <span class="text-[10px] font-black text-[#8D6E63]">さつ</span>
-                </div>
-            </div>
-            <div id="stamp-month-header" class="current-date-title"></div>
-            <div class="bg-white rounded-xl p-2 border-2 border-[#FFCCBC] shadow-sm mt-1">
-                <div class="flex justify-between items-center mb-1 px-1">
-                    <h2 class="font-black text-sm text-[#D84315]" id="stamp-month-title">スタンプ帳</h2>
-                    <span class="text-[10px] font-black text-gray-400" id="stamp-count-text">0 / 10</span>
-                </div>
-                <div class="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200 mb-2">
-                    <div id="goal-progress" class="bg-gradient-to-r from-[#FFAB91] to-[#FF7043] h-full transition-all duration-700" style="width: 0%"></div>
-                </div>
-                <div id="goal-markers" class="flex justify-between text-[9px] text-[#8D6E63] font-black px-1 mb-2"></div>
-                <div id="stamp-grid" class="stamp-grid"></div>
-            </div>
-        </main>
-
-        <!-- ナビゲーション -->
-        <nav class="bg-white border-t-2 border-[#FFCCBC] h-14 shrink-0 flex items-center justify-around pb-1">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-btn active flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-xl">🏠</span><span class="text-[9px] font-black">ホーム</span>
-            </button>
-            <button onclick="switchTab('log')" id="nav-log" class="nav-btn flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-xl">📚</span><span class="text-[9px] font-black">リスト</span>
-            </button>
-            <button onclick="switchTab('stamp')" id="nav-stamp" class="nav-btn flex-1 flex flex-col items-center justify-center h-full">
-                <span class="text-xl">💮</span><span class="text-[9px] font-black">スタンプ</span>
-            </button>
-        </nav>
+    <h1 class="app-title" id="app-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-book"></use></svg><span class="t">どくしょ ちょきんばこ</span></h1>
+    <div class="hdr-slot right">
+      <button class="hdr-btn" id="hdr-help" data-act="go" data-screen="help" aria-label="つかいかた"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-help"></use></svg></button>
     </div>
+  </header>
 
-    <!-- モーダル・確認画面 -->
-    <div id="reset-confirm-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[700] bg-black/80 text-left">
-        <div class="bg-white w-full max-w-sm rounded-[1.5rem] p-6 border-4 border-red-200 shadow-2xl text-center">
-            <p class="text-4xl mb-4">⚠️</p>
-            <h3 class="text-xl font-black text-red-600 mb-4 leading-relaxed">データをけします<br>ほんとうにいいですか</h3>
-            <div class="flex gap-3">
-                <button onclick="hideResetConfirm()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-lg shadow active:scale-95">やめる</button>
-                <button onclick="resetAllDataActual()" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-red-700">けす！</button>
-            </div>
+  <div class="screens" id="screens">
+
+    <!-- ========== ホーム ========== -->
+    <section class="screen" data-screen="tab-home" aria-label="ホーム">
+      <div class="wrap">
+        <div class="home-cols">
+          <div class="stack">
+
+            <section class="card soft">
+              <div class="card-head">
+                <h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-coin"></use></svg>いままでに よんだ本の ちょきん</h2>
+              </div>
+              <div class="bank-grid">
+                <div class="bank-box">
+                  <span class="bank-label">よんだ本のかず</span>
+                  <span class="bank-num"><b class="bank-value" id="stat-books">0</b><span class="bank-unit">さつ</span></span>
+                </div>
+                <div class="bank-box">
+                  <span class="bank-label">よんだページ</span>
+                  <span class="bank-num"><b class="bank-value" id="stat-pages">0</b><span class="bank-unit">ページ</span></span>
+                </div>
+                <div class="bank-box">
+                  <span class="bank-label">ごうけいきんがく</span>
+                  <span class="bank-num"><b class="bank-value" id="stat-price">0</b><span class="bank-unit">えん</span></span>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2 class="card-title" id="home-month-title">こんげつの ようす</h2>
+                <span class="chip" id="home-month-chip">0 / 10 さつ</span>
+              </div>
+              <div class="progress"><span id="home-progress"></span></div>
+              <p class="muted tiny center mt-2" id="home-month-msg"></p>
+            </section>
+
+          </div>
+
+          <div class="stack">
+            <section class="card blue">
+              <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-book-plus"></use></svg>本を きろくする</h2></div>
+              <div class="stack">
+                <button class="btn btn-blue btn-xl block" data-act="go" data-screen="scan">
+                  <svg class="ic btn-icon" aria-hidden="true" focusable="false"><use href="#i-camera"></use></svg>カメラで バーコードを よむ
+                </button>
+                <button class="btn btn-ghost block" data-act="entry" data-mode="isbn">
+                  <svg class="ic btn-icon" aria-hidden="true" focusable="false"><use href="#i-keypad"></use></svg>本のばんごう(ISBN)で さがす
+                </button>
+                <button class="btn btn-ghost block" data-act="entry" data-mode="manual">
+                  <svg class="ic btn-icon" aria-hidden="true" focusable="false"><use href="#i-pen"></use></svg>じぶんで かいて きろくする
+                </button>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg>さいきん きろくした本</h2>
+                <button class="btn btn-sm btn-ghost" data-act="tab" data-tab="list">ぜんぶ みる</button>
+              </div>
+              <div class="book-list" id="recent-list"></div>
+            </section>
+          </div>
         </div>
-    </div>
 
-    <!-- 目標達成のお祝いモーダル -->
-    <div id="goal-achieved-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[800] bg-black/80 text-center">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 border-4 border-yellow-400 shadow-2xl animate-bounce">
-            <p class="text-6xl mb-4">🎊</p>
-            <h3 class="text-2xl font-black text-orange-500 mb-2">おめでとう！</h3>
-            <p class="text-lg font-bold text-gray-700">こんげつの もくひょう<br>たっせい！</p>
-            <button onclick="document.getElementById('goal-achieved-modal').classList.add('hidden')" class="mt-6 px-8 py-3 bg-yellow-400 text-white rounded-xl font-black text-xl shadow-lg border-b-4 border-yellow-600 active:scale-95">やったね！</button>
-        </div>
-    </div>
+        <p class="muted tiny center">©2026 どくしょ ちょきんばこ／ＩＣＴ支援の杜<br>
+          <a href="https://giga-school.com/apps/reading-books/" target="_blank" rel="noopener">使い方を読む</a></p>
+      </div>
+    </section>
 
-    <div id="help-modal" class="fixed inset-0 hidden flex items-center justify-center p-4 z-[600] bg-black/70 text-left">
-        <div class="bg-white w-full max-w-sm rounded-[1.2rem] p-5 border-4 border-[#FFCCBC] flex flex-col shadow-2xl overflow-hidden text-left">
-            <h3 class="text-xl font-black text-[#D84315] mb-3 text-center">📕 つかいかた</h3>
-            <div class="flex-1 space-y-3 text-sm font-bold text-[#5D4037] overflow-y-auto no-scrollbar py-1 text-left">
-                <div class="bg-[#E1F5FE] p-2.5 rounded-xl border border-[#4FC3F7]">
-                    <p class="text-blue-600 mb-0.5 font-black text-sm">📸 バーコードをよむ</p>
-                    <p class="text-[11px] font-medium leading-relaxed">本のうしろのバーコードに赤い線をあわせてね。</p>
-                </div>
-                <div class="bg-[#FFF9C4] p-2.5 rounded-xl border border-[#FFF176]">
-                    <p class="text-yellow-700 mb-0.5 font-black text-sm">❌ きろくをけす</p>
-                    <p class="text-[11px] font-medium leading-relaxed">リストの画面で「❌」をおすと、まちがえたきろくを消せるよ。</p>
-                </div>
-                <div class="bg-[#D1C4E9] p-2.5 rounded-xl border border-[#9575CD]">
-                    <p class="text-[#4527A0] mb-0.5 font-black text-sm">💾 データをのこす</p>
-                    <p class="text-[11px] font-medium leading-relaxed">ほぞんしておけば、スマホをかえても続きからできるよ！</p>
-                </div>
+    <!-- ========== リスト ========== -->
+    <section class="screen" data-screen="tab-list" aria-label="よんだ本のリスト">
+      <div class="wrap">
+        <section class="card">
+          <div class="row wrap between">
+            <div class="row">
+              <select class="input select-sm" id="year-select" aria-label="とし"></select>
+              <select class="input select-sm" id="month-select" aria-label="つき"></select>
             </div>
-            <button onclick="hideHelp()" class="mt-4 w-full py-3 bg-[#FF7043] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#E64A19]">わかった！</button>
-        </div>
-    </div>
-
-    <!-- 検索モーダル (スマホ最適化済み) -->
-    <div id="modal-overlay" class="fixed inset-0 hidden flex items-center justify-center p-2 z-[500] bg-black/60 text-left">
-        <div class="bg-white w-[95%] max-w-md rounded-[1.5rem] p-4 border-4 border-[#4FC3F7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <h3 class="text-lg font-black text-[#0288D1] mb-2 text-center text-left">🔎 本のばんごうで さがす</h3>
-            <div class="flex-1 overflow-y-auto space-y-4 pt-1 px-1 no-scrollbar text-left text-left text-left">
-                <div class="p-4 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
-                    <label class="text-xs font-black text-[#0277BD]">978ではじまるすうじをいれてください</label>
-                    <div class="flex gap-2 mt-1 items-stretch">
-                        <input type="text" id="input-isbn" placeholder="978..." class="flex-1 min-w-0 p-2 bg-white border-2 border-blue-200 rounded-lg outline-none text-base font-black">
-                        <button onclick="lookupISBNFromInput()" class="shrink-0 px-4 bg-[#29B6F6] text-white rounded-lg font-black text-sm border-b-2 border-[#0277BD] active:scale-95 whitespace-nowrap">さがす</button>
-                    </div>
-                </div>
-                <div id="search-candidates"></div>
-                <div class="border-t-2 border-dashed border-gray-200 pt-4 text-left">
-                    <label class="text-[10px] font-black text-gray-400">本の なまえ</label>
-                    <input type="text" id="input-title" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
-                    <label class="text-[10px] font-black text-gray-400">かいた ひと</label>
-                    <input type="text" id="input-author" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg mb-2 text-base font-black">
-                    <div class="flex gap-3">
-                        <div class="flex-1">
-                            <label class="text-[10px] font-black text-gray-400">ページ</label>
-                            <input type="number" id="input-pages" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
-                        </div>
-                        <div class="flex-1">
-                            <label class="text-[10px] font-black text-gray-400">ねだん</label>
-                            <input type="number" id="input-price" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-base font-black">
-                        </div>
-                    </div>
-                </div>
+            <div class="seg" id="range-seg">
+              <button data-act="range" data-range="month">この月</button>
+              <button data-act="range" data-range="year">この年</button>
+              <button data-act="range" data-range="all">ぜんぶ</button>
             </div>
-            
-            <p class="text-[10px] font-bold text-center text-gray-500 mt-2 mb-1">さがした本がまちがっていなかったら<br>きろく！をおします</p>
-            <div class="flex gap-3 pt-2 border-t-2 mt-0 shrink-0 text-left">
-                <button onclick="hideManualModal()" class="flex-1 py-3 text-gray-500 font-black text-lg hover:bg-gray-100 rounded-xl">やめる</button>
-                <button onclick="manualAddBook()" class="flex-1 py-3 bg-[#29B6F6] text-white rounded-xl font-black text-lg shadow active:scale-95 border-b-4 border-[#0277BD]">きろく！</button>
+          </div>
+          <div class="row search-row mt-4">
+            <svg class="ic search-ic" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>
+            <input class="input has-ic" id="list-search" type="search" placeholder="本の なまえで さがす" autocomplete="off">
+          </div>
+          <div class="row mt-4 between">
+            <span class="chip" id="list-count">0 さつ</span>
+            <span class="chip blue" id="list-pages">0 ページ</span>
+            <span class="chip gold" id="list-price">0 えん</span>
+          </div>
+        </section>
+
+        <p class="muted tiny center">本を タップすると くわしく みられます</p>
+        <div class="book-list" id="book-list"></div>
+      </div>
+    </section>
+
+    <!-- ========== スタンプ ========== -->
+    <section class="screen" data-screen="tab-stamp" aria-label="スタンプちょう">
+      <div class="wrap">
+        <section class="card">
+          <div class="row wrap between">
+            <div class="row">
+              <select class="input select-sm" id="year-select-2" aria-label="とし"></select>
+              <select class="input select-sm" id="month-select-2" aria-label="つき"></select>
             </div>
+            <div class="row">
+              <span class="muted tiny">もくひょう</span>
+              <input class="input input-goal" id="goal-input" type="number" min="1" max="99" inputmode="numeric"
+                     aria-label="こんげつのもくひょう">
+              <span class="muted tiny">さつ</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title" id="stamp-title">スタンプ帳</h2>
+            <span class="chip" id="stamp-count">0 / 10</span>
+          </div>
+          <div class="progress"><span id="stamp-progress"></span></div>
+          <div class="progress-marks" id="stamp-marks"></div>
+          <div class="stamp-grid mt-5" id="stamp-grid"></div>
+          <p class="muted tiny center mt-5" id="stamp-msg"></p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========== きろく・せってい ========== -->
+    <section class="screen" data-screen="tab-data" aria-label="きろくとせってい">
+      <div class="wrap">
+        <div class="menu">
+          <button class="menu-item" data-act="go" data-screen="stats">
+            <span class="menu-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chart"></use></svg></span>
+            <span class="menu-text"><b>どくしょの ふりかえり</b><span>つづけてきた ようすを グラフで みる</span></span>
+            <span class="menu-arrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-right"></use></svg></span>
+          </button>
+          <button class="menu-item" data-act="go" data-screen="backup">
+            <span class="menu-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-save"></use></svg></span>
+            <span class="menu-text"><b>データを のこす・よみこむ</b><span>べつの きかいへ もっていく</span></span>
+            <span class="menu-arrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-right"></use></svg></span>
+          </button>
+          <button class="menu-item" data-act="go" data-screen="help">
+            <span class="menu-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-guide"></use></svg></span>
+            <span class="menu-text"><b>つかいかた</b><span>こまったときは ここを みてね</span></span>
+            <span class="menu-arrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-right"></use></svg></span>
+          </button>
+          <button class="menu-item install-only" id="install-row" data-act="install" hidden>
+            <span class="menu-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-install"></use></svg></span>
+            <span class="menu-text"><b>アプリとして インストール</b><span>ホームがめんに おいて つかえます</span></span>
+            <span class="menu-arrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-right"></use></svg></span>
+          </button>
+          <button class="menu-item" data-act="toggle-sound">
+            <span class="menu-emoji" id="sound-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-bell"></use></svg></span>
+            <span class="menu-text"><b>おとを ならす</b><span id="sound-state">ならす</span></span>
+            <span class="menu-arrow" id="sound-mark">オン</span>
+          </button>
+          <button class="menu-item danger" data-act="go" data-screen="reset">
+            <span class="menu-emoji"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-trash"></use></svg></span>
+            <span class="menu-text"><b>きろくを ぜんぶ けす</b><span>もとには もどせません</span></span>
+            <span class="menu-arrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-right"></use></svg></span>
+          </button>
         </div>
-    </div>
 
-    <div id="celebration" class="fixed inset-0 pointer-events-none z-[1000] flex items-center justify-center hidden">
-        <div class="bg-white/95 p-10 rounded-[3rem] shadow-2xl text-center border-4 border-[#FF7043] animate-bounce text-left">
-            <p class="text-7xl mb-4">🎉</p>
-            <h2 class="text-xl font-black text-[#FF5722] text-left">きろく したよ！</h2>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-info"></use></svg>このアプリについて</h2></div>
+          <p class="muted tiny" id="about-text"></p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========== カメラ（かいそう1） ========== -->
+    <section class="screen fill" data-screen="scan" aria-label="カメラでよみとる">
+      <div class="scan-screen">
+        <div class="scan-stage" id="scan-stage">
+          <div class="scan-idle" id="scan-idle">
+            <svg class="ic ic-46" aria-hidden="true" focusable="false"><use href="#i-camera"></use></svg>
+            <p id="scan-idle-msg">カメラの じゅんびを しています…</p>
+          </div>
+          <div class="scan-frame" id="scan-frame" hidden>
+            <span class="scan-corner tl"></span><span class="scan-corner tr"></span>
+            <span class="scan-corner bl"></span><span class="scan-corner br"></span>
+            <span class="scan-line"></span>
+          </div>
+          <p class="scan-hint" id="scan-hint" hidden>本の うらの <b>978</b> ではじまる バーコードに あわせてね</p>
+          <div class="scan-ok" id="scan-ok"><svg class="ic ic-48 txt-ok" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg><b class="txt-primary">よめました！</b></div>
         </div>
+        <div class="scan-bar">
+          <button class="btn btn-ghost" data-act="torch" id="torch-btn" hidden><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-flash"></use></svg>ライト</button>
+          <button class="btn btn-blue" data-act="entry" data-mode="isbn"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-keypad"></use></svg>ばんごうで いれる</button>
+          <button class="btn btn-ghost" data-act="back">やめる</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 本をきろくする（かいそう1〜2） ========== -->
+    <section class="screen" data-screen="entry" aria-label="本をきろくする">
+      <div class="wrap">
+        <section class="card blue" id="isbn-card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-search"></use></svg>本のばんごう(ISBN)で さがす</h2></div>
+          <div class="row">
+            <input class="input" id="entry-isbn" type="text" inputmode="numeric" autocomplete="off"
+                   placeholder="978…" aria-label="ISBN">
+            <button class="btn btn-blue flex-none" data-act="lookup">さがす</button>
+          </div>
+          <div id="lookup-result" class="mt-4"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-pen"></use></svg>本の じょうほう</h2></div>
+          <label class="field"><span>本の なまえ ＊</span>
+            <input class="input" id="entry-title" type="text" autocomplete="off" maxlength="120"></label>
+          <label class="field"><span>かいた ひと</span>
+            <input class="input" id="entry-author" type="text" autocomplete="off" maxlength="80"></label>
+          <div class="row gap-10 items-start">
+            <label class="field flex-1"><span>ページ ＊</span>
+              <input class="input" id="entry-pages" type="number" inputmode="numeric" min="1" max="20000"></label>
+            <label class="field flex-1"><span>ねだん(えん)</span>
+              <input class="input" id="entry-price" type="number" inputmode="numeric" min="0" max="1000000"></label>
+          </div>
+          <div class="field">
+            <span class="field-label">おもしろさ</span>
+            <div id="entry-stars"></div>
+          </div>
+          <label class="field mb-0"><span>かんそう（かかなくても いいよ）</span>
+            <textarea class="input" id="entry-memo" maxlength="200" placeholder="おもしろかった ところ など"></textarea></label>
+        </section>
+
+        <p class="center" id="entry-month-note" hidden></p>
+        <button class="btn btn-primary btn-xl block" data-act="save"><svg class="ic btn-icon" aria-hidden="true" focusable="false"><use href="#i-book-check"></use></svg>この本を きろくする！</button>
+        <p class="muted tiny center">＊の ところは かならず かいてね</p>
+      </div>
+    </section>
+
+    <!-- ========== 本のくわしく（かいそう1） ========== -->
+    <section class="screen" data-screen="detail" aria-label="本のくわしく">
+      <div class="wrap" id="detail-body"></div>
+    </section>
+
+    <!-- ========== ふりかえり（かいそう1） ========== -->
+    <section class="screen" data-screen="stats" aria-label="ふりかえり">
+      <div class="wrap" id="stats-body"></div>
+    </section>
+
+    <!-- ========== データ（かいそう1） ========== -->
+    <section class="screen" data-screen="backup" aria-label="データをのこす">
+      <div class="wrap">
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-save"></use></svg>データを のこす</h2></div>
+          <p class="muted tiny mb-5">きかいを かえるときや、まんいちに そなえて ファイルに のこせます。</p>
+          <div class="stack">
+            <button class="btn btn-blue block" data-act="export"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-save"></use></svg>ファイルに ほぞんする</button>
+            <button class="btn btn-green block" data-act="copy"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-table"></use></svg>ひょう(スプレッドシート)に コピー</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-book"></use></svg>のこした データを よむ</h2></div>
+          <p class="muted tiny mb-5">ほぞんした ファイル(.json)を えらんでください。<br>いまの きろくに <b>くわえる</b>か、<b>ぜんぶ いれかえる</b>か えらべます。</p>
+          <button class="btn btn-purple block" data-act="import"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-folder"></use></svg>ファイルを えらぶ</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg>紙に いんさつする</h2></div>
+          <p class="muted tiny mb-5">よんだ本の きろくを A4の紙に いんさつします。<br>おうちの人や 先生に みせる ときに つかってね。</p>
+          <button class="btn btn-ghost block" data-act="print"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg>いんさつの がめんを ひらく</button>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-shield"></use></svg>データの ばしょ</h2></div>
+          <p class="muted tiny">きろくは この きかいの なかだけに ほぞんされます。<br>インターネットへ おくることは ありません。</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========== つかいかた（かいそう1） ========== -->
+    <section class="screen" data-screen="help" aria-label="つかいかた">
+      <div class="wrap">
+        <section class="card blue">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-barcode"></use></svg>バーコードを よむ</h2></div>
+          <p class="tiny">本の うらに ある <b>978</b> で はじまる バーコードに、あかい線を あわせてね。<br>
+          すぐ下に ある <b>192</b> で はじまる バーコードは ねだんの バーコードなので つかいません。</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-keypad"></use></svg>ばんごうを いれる</h2></div>
+          <p class="tiny">カメラが つかえないときは、バーコードの下の <b>978…</b> の すうじを じぶんで いれて さがせます。</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chevron-left"></use></svg>まえの がめんに もどる</h2></div>
+          <p class="tiny">がめんの 下の <b>「もどる」</b>を おすか、がめんの <b>左右の はし</b>から まんなかへ <b>スーッと ゆびを うごかす</b>と もどれます。</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic solid" aria-hidden="true" focusable="false"><use href="#i-star"></use></svg>ほしを つける</h2></div>
+          <p class="tiny">リストで 本を えらぶと、おもしろさの ほしや かんそうを かけます。まちがえた きろみは そこで けせます。</p>
+        </section>
+        <section class="card">
+          <div class="card-head"><h2 class="card-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-save"></use></svg>データを のこす</h2></div>
+          <p class="tiny">「きろく」の がめんから ファイルに ほぞんできます。ほぞんして おけば、きかいを かえても つづきから できます。</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========== ぜんぶけす（かいそう1） ========== -->
+    <section class="screen" data-screen="reset" aria-label="きろくをぜんぶけす">
+      <div class="wrap">
+        <section class="card card-danger-edge">
+          <div class="card-head"><h2 class="card-title txt-danger"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>きろくを ぜんぶ けす</h2></div>
+          <p class="tiny mb-6">
+            よんだ本の きろく・もくひょう・スタンプが <b>ぜんぶ きえます</b>。<br>
+            もとには もどせません。けす まえに 「データを のこす」で ほぞんして おくと あんしんです。
+          </p>
+          <div class="stack">
+            <button class="btn btn-blue block" data-act="export"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-save"></use></svg>さきに ほぞんする</button>
+            <button class="btn btn-danger block" data-act="reset"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-trash"></use></svg>ほんとうに ぜんぶ けす</button>
+            <button class="btn block" data-act="back">やめる</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="app-nav" id="app-nav" data-mode="tabs">
+    <div class="nav-tabs">
+      <button class="nav-tab" data-act="tab" data-tab="home"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-home"></use></svg><span class="lbl">ホーム</span></button>
+      <button class="nav-tab" data-act="tab" data-tab="list"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-library"></use></svg><span class="lbl">リスト</span></button>
+      <button class="nav-tab" data-act="tab" data-tab="stamp"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-stamp"></use></svg><span class="lbl">スタンプ</span></button>
+      <button class="nav-tab" data-act="tab" data-tab="data"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-archive"></use></svg><span class="lbl">きろく</span></button>
     </div>
+    <button class="nav-back" data-act="back"><svg class="ic arrow" aria-hidden="true" focusable="false"><use href="#i-chevron-left"></use></svg><span id="nav-back-label">まえの がめんに もどる</span></button>
+  </nav>
+</div>
 
-    <div id="notice-msg"></div>
+<div class="edge-hint left" id="edge-left"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-arrow-left"></use></svg></div>
+<div class="edge-hint right" id="edge-right"><svg class="ic ico" aria-hidden="true" focusable="false"><use href="#i-arrow-left"></use></svg></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<!-- 画面が かわったことを 読み上げソフトに つたえる（目には見えない） -->
+<div id="screen-live" class="sr-only" role="status" aria-live="polite"></div>
+<div id="dialog-root"></div>
 
-    <script>
-        const STORAGE_KEY_LOGS = 'reading_record_main_v1_logs';
-        const STORAGE_KEY_GOALS = 'reading_record_main_v1_goals';
-        
-        let logs = [];
-        let goals = {};
-        
-        try {
-            logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [];
-            goals = JSON.parse(localStorage.getItem(STORAGE_KEY_GOALS)) || {};
-        } catch(e) {
-            console.error("Storage load error", e);
-            logs = [];
-            goals = {};
-        }
+<!-- いんさつ専用のシート。ふだんは見えず、印刷のときだけ紙に出る。
+     中身は js/app.js が印刷の直前に組み立てる（beforeprint）。 -->
+<div id="print-sheet" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
 
-        let isScannerRunning = false, isProcessingBarcode = false;
-        let selectedYear = new Date().getFullYear(), selectedMonth = new Date().getMonth() + 1;
-        let audioCtx = null;
+<!-- 学習ログ共通モジュール（全アプリ共通・不変） -->
 
-        const STAMPS = { 1: "🎍", 2: "❄️", 3: "🌸", 4: "🎒", 5: "🎏", 6: "💠", 7: "🍉", 8: "🌻", 9: "🎑", 10: "🎃", 11: "🍁", 12: "🎄" };
-
-        function playFanfare() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
-                const t = audioCtx.currentTime;
-                // パパパパン！ (ファンファーレ)
-                const playTone = (freq, time, dur) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(freq, time);
-                    gain.gain.setValueAtTime(0, time);
-                    gain.gain.linearRampToValueAtTime(0.08, time + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start(time);
-                    osc.stop(time + dur);
-                };
-
-                playTone(392.00, t, 0.15);       
-                playTone(523.25, t + 0.15, 0.15);
-                playTone(659.25, t + 0.30, 0.15); 
-                playTone(783.99, t + 0.45, 0.15);
-                playTone(1046.50, t + 0.60, 0.6); 
-                playTone(523.25, t + 0.60, 0.6);  
-
-            } catch(e) {}
-        }
-
-        function playBeep() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } catch(e) {}
-        }
-
-        window.onload = () => { 
-            try {
-                initDateSelectors(); 
-                renderAll();
-            } catch(e) { console.error("Window onload error", e); }
-        };
-
-        function initDateSelectors() {
-            const yLog = document.getElementById('year-selector-log'), yStamp = document.getElementById('year-selector-stamp');
-            const mLog = document.getElementById('month-selector-log'), mStamp = document.getElementById('month-selector-stamp');
-            const years = []; for(let i = 2020; i <= new Date().getFullYear() + 16; i++) years.push(i);
-            years.reverse(); 
-            if(yLog && yStamp) [yLog, yStamp].forEach(sel => { if(sel) { sel.innerHTML = ""; years.forEach(y => sel.add(new Option(`${y}年`, y))); sel.value = selectedYear; } });
-            if(mLog && mStamp) [mLog, mStamp].forEach(sel => { if(sel) { sel.innerHTML = ""; for(let i=1; i<=12; i++) sel.add(new Option(`${i}月`, i)); sel.value = selectedMonth; } });
-        }
-
-        function syncDateAndRender(val, type) {
-            if (type === 'year') { selectedYear = parseInt(val); if(document.getElementById('year-selector-log')) document.getElementById('year-selector-log').value = val; if(document.getElementById('year-selector-stamp')) document.getElementById('year-selector-stamp').value = val; }
-            else { selectedMonth = parseInt(val); if(document.getElementById('month-selector-log')) document.getElementById('month-selector-log').value = val; if(document.getElementById('month-selector-stamp')) document.getElementById('month-selector-stamp').value = val; }
-            renderAll();
-        }
-
-        function renderAll() { if (!Array.isArray(logs)) logs = []; renderChokinBako(); renderStampPage(); renderBookList(); }
-
-        function renderChokinBako() {
-            const tbc = document.getElementById('total-books-count'), tpr = document.getElementById('total-price-count'), tpa = document.getElementById('total-pages-count');
-            if (tbc) tbc.innerText = logs.length;
-            if (tpr) tpr.innerText = logs.reduce((s, b) => s + (parseInt(b.price) || 0), 0).toLocaleString();
-            if (tpa) tpa.innerText = logs.reduce((s, b) => s + (parseInt(b.pages) || 0), 0).toLocaleString();
-        }
-
-        function renderStampPage() {
-            const key = `${selectedYear}-${selectedMonth}`, goal = goals[key] || 10;
-            const countText = document.getElementById('stamp-count-text'), progress = document.getElementById('goal-progress'), grid = document.getElementById('stamp-grid');
-            const targetEl = document.getElementById('target-goal-input'), headEl = document.getElementById('stamp-month-header');
-            if(targetEl) targetEl.value = goal;
-            if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
-            const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            const count = monthlyLogs.length;
-            if (countText) countText.innerText = `${count} / ${goal}`;
-            
-            // 達成時にプログレスバーを金色にする
-            if (count >= goal) {
-                progress.className = "h-full transition-all duration-700 progress-gold";
-            } else {
-                progress.className = "bg-gradient-to-r from-[#FFAB91] to-[#FF7043] h-full transition-all duration-700";
-            }
-            if (progress) progress.style.width = Math.min(100, (count / goal) * 100) + "%";
-            
-            if (grid) { grid.innerHTML = ""; const icon = STAMPS[selectedMonth] || "💮"; for (let i = 0; i < 36; i++) { const cell = document.createElement('div'); cell.className = "stamp-cell" + (i < count ? " filled" : ""); if (i < count) cell.innerText = icon; grid.appendChild(cell); } }
-        }
-
-        function renderBookList() {
-            const list = document.getElementById('book-list'), headEl = document.getElementById('log-month-header');
-            if(headEl) headEl.innerText = `${selectedYear}年 ${selectedMonth}月`;
-            const monthlyLogs = logs.filter(l => { if (!l) return false; const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            if (document.getElementById('log-monthly-books')) document.getElementById('log-monthly-books').innerText = monthlyLogs.length;
-            if (!list) return;
-            if (monthlyLogs.length === 0) { list.innerHTML = `<div class="py-14 text-gray-400 font-bold text-sm text-center">📚 この月のきろくはありません</div>`; return; }
-            list.innerHTML = monthlyLogs.map(book => `
-                <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between gap-2 mb-1 relative text-left">
-                    <div class="flex-1 overflow-hidden text-left">
-                        <div class="flex items-center gap-1.5 mb-0.5"><span class="text-[7px] font-black px-1.5 py-0.5 bg-[#FFDEE9] text-[#FF6B6B] rounded-full shrink-0">${book.date.split('/')[2]}日</span>
-                        <div class="font-black text-[#4E342E] text-[10px] truncate flex-1">${book.title}</div></div>
-                        <div class="flex items-center gap-2 text-[8px] text-gray-400"><div class="truncate flex-1">${book.author}</div><div class="text-[#29B6F6] font-black">${book.pages}p / ${book.price}円</div></div>
-                    </div>
-                    <div class="flex flex-col items-end gap-0.5 shrink-0 text-left">
-                        <button onclick="deleteEntry(${book.id})" class="text-gray-300 text-[12px] p-1 font-bold">❌</button>
-                        <div class="flex gap-0.5 text-left">${[1, 2, 3, 4, 5].map(star => `<button onclick="updateRating(${book.id}, ${star})" class="text-sm ${star <= (book.rating || 0) ? 'text-[#FFB800]' : 'text-gray-200'}">★</button>`).join('')}</div>
-                    </div>
-                </div>`).join('');
-        }
-
-        // --- 通知・コピー・保存・読み込み ---
-        function showNotice(msg) {
-            const bar = document.getElementById('notice-msg');
-            if(!bar) return;
-            bar.innerText = msg; bar.classList.add('show');
-            setTimeout(() => bar.classList.remove('show'), 3000);
-        }
-
-        function copyForSpreadsheet() {
-            if (!logs || logs.length === 0) { showNotice("きろくが ありません"); return; }
-            let tsv = "日付\tタイトル\tかいた人\tかんそう\tページ数\tごうけいページ\tきんがく\tごうけいきんがく\n";
-            let runningPages = 0, runningPrice = 0;
-            [...logs].reverse().forEach(b => {
-                const p = parseInt(b.pages) || 0, pr = parseInt(b.price) || 0;
-                runningPages += p; runningPrice += pr;
-                tsv += `${b.date}\t${b.title}\t${b.author}\t${"⭐".repeat(b.rating || 0)}\t${p}\t${runningPages}\t${pr}\t${runningPrice}\n`;
-            });
-            const ta = document.createElement("textarea");
-            ta.value = tsv; ta.style.position = "fixed"; ta.style.left = "-9999px"; ta.style.top = "0";
-            document.body.appendChild(ta); ta.select();
-            try {
-                if (document.execCommand('copy')) showNotice("データをコピーしました");
-                else showNotice("コピーにしっぱいしました");
-            } catch (err) { showNotice("コピーできませんでした"); }
-            document.body.removeChild(ta);
-        }
-
-        function saveDataFile() {
-            if (!logs || logs.length === 0) { showNotice("きろくが ありません"); return; }
-            try {
-                const data = { logs, goals, version: "v1", date: new Date().toISOString() };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = `どくしょのきろく_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                showNotice("バックアップしました！");
-            } catch(e) { showNotice("ほぞんに しっぱいしました"); }
-        }
-
-        function loadDataFile(input) {
-            const f = input.files[0]; if (!f) return;
-            const r = new FileReader();
-            r.onload = (e) => {
-                try {
-                    const d = JSON.parse(e.target.result);
-                    if (d.logs && Array.isArray(d.logs)) {
-                        logs = d.logs; goals = d.goals || {};
-                        localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
-                        localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals));
-                        renderAll(); showNotice("復元しました！");
-                    } else { showNotice("データのかたちが ちがいます"); }
-                } catch (err) { showNotice("しっぱいしました"); }
-            };
-            r.readAsText(f); input.value = "";
-        }
-
-        // --- 削除・リセット ---
-        function deleteEntry(id) { if (confirm("この きろくを けしても いいですか？")) { logs = logs.filter(b => b.id !== id); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); showNotice("けしました"); } }
-        function showResetConfirm() { document.getElementById('reset-confirm-modal').classList.remove('hidden'); }
-        function hideResetConfirm() { document.getElementById('reset-confirm-modal').classList.add('hidden'); }
-        function resetAllDataActual() { localStorage.removeItem(STORAGE_KEY_LOGS); localStorage.removeItem(STORAGE_KEY_GOALS); logs = []; goals = {}; renderAll(); hideResetConfirm(); showNotice("すべてリセットしました"); }
-
-        function updateGoal(val) { const key = `${selectedYear}-${selectedMonth}`; goals[key] = parseInt(val) || 10; localStorage.setItem(STORAGE_KEY_GOALS, JSON.stringify(goals)); renderAll(); }
-        function switchTab(tab) { document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active')); const tabEl = document.getElementById('tab-' + tab), navEl = document.getElementById('nav-' + tab); if(tabEl) tabEl.classList.add('active'); if(navEl) navEl.classList.add('active'); if (tab !== 'home') stopScanner(); renderAll(); }
-
-        // --- 最強の検索ロジック (ページ数・金額取得 徹底強化・完全復元版) ---
-        async function searchBookData(isbn) {
-            const la = document.getElementById('search-candidates');
-            la.innerHTML = `<div class="py-4 text-xs text-gray-500 font-black animate-pulse text-center">しらべています...</div>`;
-            
-            let res = { title: "", author: "", price: "" };
-            let pageCandidates = [];
-            let priceCandidates = [];
-
-            // 1. Google Books API (詳細な説明文スキャン)
-            const fGoogle = fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`).then(r => r.json()).then(data => {
-                if (data.items && data.items.length > 0) {
-                    const info = data.items[0].volumeInfo;
-                    res.title = info.title || "";
-                    res.author = cleanAuthorName(info.authors?.join(' ') || "");
-                    if (info.pageCount) pageCandidates.push(parseInt(info.pageCount));
-                    if (data.items[0].saleInfo?.listPrice) priceCandidates.push(extractCleanNum(data.items[0].saleInfo.listPrice.amount));
-                    // 説明文の中からページ数を探す（最強ロジック）
-                    if (info.description) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(info.description));
-                }
-            }).catch(() => {});
-
-            // 2. openBD API (ONIX構造から精密取得)
-            const fOpenBD = fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`).then(r => r.json()).then(data => {
-                if (data && data[0]) {
-                    const b = data[0].summary, onix = data[0].onix;
-                    if (!res.title) res.title = b.title || "";
-                    if (!res.author) res.author = cleanAuthorName(b.author || "");
-                    if (b.pages) pageCandidates.push(extractCleanNum(b.pages));
-                    try {
-                        const exts = onix?.DescriptiveDetail?.Extent;
-                        if (exts && Array.isArray(exts)) {
-                            exts.forEach(e => {
-                                if (["00", "11", "07", "08", "06", "05"].includes(e.ExtentType)) {
-                                     pageCandidates.push(extractCleanNum(e.ExtentValue));
-                                }
-                            });
-                        }
-                    } catch(e) {}
-                    try {
-                        const prices = onix?.ProductSupply?.SupplyDetail?.Price;
-                        if (prices && Array.isArray(prices)) {
-                            prices.forEach(p => { if (p.PriceAmount) priceCandidates.push(extractCleanNum(p.PriceAmount)); });
-                        }
-                    } catch(e) {}
-                }
-            }).catch(() => {});
-
-            // 3. NDL (国立国会図書館) - 取得ロジック強化
-            const fNDL = fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`).then(async r => {
-                const txt = await r.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(txt, "text/xml");
-                const item = xmlDoc.getElementsByTagName("item")[0];
-                // iOSなど一部環境でのタグ名取得の安全策
-                const getItem = (doc) => doc.querySelector("item") || doc.getElementsByTagName("item")[0];
-                const targetItem = getItem(xmlDoc);
-
-                if (targetItem) {
-                    // タグ名を指定して安全に取得するヘルパー
-                    const getVal = (tag) => {
-                         const el = targetItem.getElementsByTagName(tag)[0] || targetItem.getElementsByTagName("dc:"+tag)[0] || targetItem.getElementsByTagName("dcterms:"+tag)[0];
-                         return el ? el.textContent : "";
-                    };
-
-                    const t = getVal("title");
-                    if (!res.title) res.title = t;
-                    
-                    const desc = getVal("description");
-                    if (desc) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(desc));
-                    
-                    // extent (大きさ・容量) からページ数を抽出
-                    const extent = getVal("extent");
-                    if (extent) pageCandidates = pageCandidates.concat(scanPageNumsDeeply(extent));
-                    
-                    const priceText = getVal("price");
-                    if (priceText) priceCandidates.push(extractCleanNum(priceText));
-                }
-            }).catch(() => {});
-
-            await Promise.allSettled([fGoogle, fOpenBD, fNDL]);
-
-            // 数字の選定 (大きい順にソートして最大値を採用)
-            const validPages = pageCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
-            const validPrices = priceCandidates.filter(n => !isNaN(n) && n > 0).sort((a, b) => b - a);
-            
-            // ページ数は最大のものを採用（本文＋あとがき等が反映されやすいため）
-            let finalPages = validPages.length > 0 ? validPages[0].toString() : "";
-            let finalPrice = validPrices.length > 0 ? validPrices[0].toString() : "";
-            
-            // 未取得項目を確認
-            const missing = [];
-            if (!res.title) missing.push('input-title');
-            if (!finalPages) missing.push('input-pages');
-            if (!finalPrice) missing.push('input-price');
-
-            if (res.title) {
-                la.innerHTML = `<div onclick="applyToForm('${res.title.replace(/'/g,"\\'")}', '${res.author.replace(/'/g,"\\'")}', '${finalPages}', '${finalPrice}')" class="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 text-left">
-                    <span class="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full">みつけた！</span>
-                    <p class="text-sm font-black text-gray-800 line-clamp-1 mt-1">${res.title}</p>
-                    ${missing.length > 0 ? '<p class="text-[10px] text-red-500 font-bold mt-1">※たりない ところは 入力してね</p>' : ''}
-                </div>`;
-                applyToForm(res.title, res.author, finalPages, finalPrice);
-                
-                // 未取得項目を赤枠にする
-                if (!finalPages) document.getElementById('input-pages').classList.add('input-error');
-                if (!finalPrice) document.getElementById('input-price').classList.add('input-error');
-                
-            } else {
-                la.innerHTML = `<p class="py-4 text-xs text-gray-400 font-black text-center text-left">みつかりませんでした。</p>`;
-                applyToForm("", "", "", "");
-            }
-        }
-
-        function extractCleanNum(v) { 
-            if(!v) return 0;
-            const s = v.toString().replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            const num = parseInt(s.replace(/[^0-9]/g, ''));
-            return isNaN(num) ? 0 : num;
-        }
-
-        function scanPageNumsDeeply(t) { 
-            if(!t) return [];
-            const text = t.replace(/[０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0));
-            // 数字＋ページ、p、頁、枚、または「ページ数：数字」のパターン (matchAll不使用)
-            const regex = /(\d{1,4})\s*(?:p|ページ|頁|枚|p\.)|(?:ページ|p|page|Pages)[:：\s]*(\d{1,4})/gi;
-            let match;
-            const results = [];
-            while ((match = regex.exec(text)) !== null) {
-                const num = parseInt(match[1] || match[2]);
-                if (!isNaN(num) && num > 5) results.push(num);
-            }
-            return results;
-        }
-        
-        function cleanAuthorName(s) { 
-            if (!s) return ""; 
-            // 年号などの不要な情報を削除
-            let c = s.replace(/(\d{4}\s*-\s*\d{4}|\d{4}\s*-\s*|\s*-\s*\d{4})/g, '')
-                     .replace(/[著編訳]|監修|ほか|イラスト/g, '')
-                     .replace(/[／,，、．.\[\]\(\)（）]/g, ' ')
-                     .trim(); 
-            let p = [...new Set(c.split(/\s+/).filter(x => x.length > 0))]; 
-            return p.filter(x => !p.some(o => o !== x && o.includes(x))).join(' ').trim(); 
-        }
-
-        function applyToForm(t, a, p, pr) { 
-            document.getElementById('input-title').value = t || ""; 
-            document.getElementById('input-author').value = a || ""; 
-            document.getElementById('input-pages').value = p || ""; 
-            document.getElementById('input-price').value = pr || "";
-            // エラー枠リセット
-            ['input-title', 'input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
-        }
-
-        function showManualModal(isbn = "") { 
-            document.getElementById('modal-overlay').classList.remove('hidden'); 
-            
-            // フォームのクリア処理
-            if(document.getElementById('input-isbn')) document.getElementById('input-isbn').value = isbn;
-            document.getElementById('input-title').value = "";
-            document.getElementById('input-author').value = "";
-            document.getElementById('input-pages').value = "";
-            document.getElementById('input-price').value = "";
-            
-            // 検索候補とエラー表示もクリア
-            document.getElementById('search-candidates').innerHTML = "";
-            ['input-pages', 'input-price'].forEach(id => document.getElementById(id).classList.remove('input-error'));
-        }
-
-        function hideManualModal() { document.getElementById('modal-overlay').classList.add('hidden'); isProcessingBarcode = false; }
-        function lookupISBNFromInput() { const v = document.getElementById('input-isbn').value.trim().replace(/[^0-9]/g, ''); if (v.length >= 10) searchBookData(v); }
-
-        function toggleScanner() { isScannerRunning ? stopScanner() : startScanner(); }
-        function stopScanner() {
-            isScannerRunning = false; isProcessingBarcode = false;
-            try { if(typeof Quagga !== 'undefined') Quagga.stop(); } catch(e) {}
-            document.querySelectorAll('video').forEach(v => { if (v.srcObject) v.srcObject.getTracks().forEach(t => t.stop()); v.remove(); });
-            const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "カメラでバーコードをよむ"; 
-            const sc = document.getElementById('scanner-cover'); if(sc) sc.classList.remove('hidden');
-            const gb = document.getElementById('guide-box'); if(gb) gb.classList.add('hidden');
-            const so = document.getElementById('success-overlay'); if(so) so.style.display = "none";
-            const canvas = document.querySelector('#interactive canvas'); if (canvas) canvas.remove();
-        }
-        async function startScanner() {
-            if (isScannerRunning || typeof Quagga === 'undefined') return;
-            const btn = document.getElementById('btn-text'); if(btn) btn.innerText = "とめる";
-            try {
-                playFanfare(); // 音の初期化（許可取り）
-                Quagga.init({
-                    inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#interactive'), constraints: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, area: { top: "10%", bottom: "10%" } },
-                    decoder: { readers: ["ean_reader"] }, frequency: 10, numOfWorkers: 2, locator: { patchSize: "medium", halfSample: true }
-                }, (err) => {
-                    if (err) { stopScanner(); showNotice("カメラが使えません。"); return; }
-                    Quagga.start(); isScannerRunning = true; 
-                    document.getElementById('scanner-cover').classList.add('hidden');
-                    document.getElementById('guide-box').classList.remove('hidden');
-                });
-            } catch (e) { stopScanner(); }
-        }
-        
-        if(typeof Quagga !== 'undefined') {
-            Quagga.onDetected(data => { 
-                const code = data.codeResult.code; if (!code || isProcessingBarcode || code.length !== 13 || code.startsWith('192')) return;
-                isProcessingBarcode = true; playBeep(); document.getElementById('success-overlay').style.display = "flex"; 
-                setTimeout(() => { showManualModal(code); searchBookData(code); stopScanner(); }, 200); 
-            });
-        }
-
-        // 目標達成チェック
-        function checkGoalAchievement() {
-            const key = `${selectedYear}-${selectedMonth}`;
-            const goal = goals[key] || 10;
-            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-            
-            if (monthlyLogs.length >= goal) {
-                confetti({
-                    particleCount: 200,
-                    spread: 100,
-                    origin: { y: 0.6 },
-                    colors: ['#FFD700', '#FFA500', '#FF4500', '#FFFFFF'], 
-                    zIndex: 3000 
-                });
-                document.getElementById('goal-achieved-modal').classList.remove('hidden');
-            }
-        }
-
-        function manualAddBook() {
-            const t = document.getElementById('input-title').value.trim(), p = document.getElementById('input-pages').value.trim(), pr = document.getElementById('input-price').value.trim(), a = document.getElementById('input-author').value.trim();
-            if(!t) { showNotice("なまえを いれてね"); return; }
-            if(!p || p === "0" || !pr || pr === "0") { 
-                showNotice("あいているところを かいてね");
-                if(!p || p==="0") document.getElementById('input-pages').classList.add('input-error');
-                if(!pr || pr==="0") document.getElementById('input-price').classList.add('input-error');
-                return; 
-            }
-            
-            const now = new Date();
-            const recordDate = new Date(selectedYear, selectedMonth - 1, now.getDate());
-
-            logs.unshift({ id: Date.now(), title: t, author: a || "ふめい", pages: p, price: pr, rating: 0, date: recordDate.toLocaleDateString('ja-JP'), timestamp: recordDate.getTime() });
-            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); 
-            
-            renderAll(); 
-            playFanfare(); // ファンファーレ
-            
-            hideManualModal();
-
-            const key = `${selectedYear}-${selectedMonth}`;
-            const goal = goals[key] || 10;
-            const monthlyLogs = logs.filter(l => { const d = new Date(l.timestamp || l.date); return d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth; });
-
-            if (monthlyLogs.length >= goal) {
-                 checkGoalAchievement(); 
-            } else {
-                 const cl = document.getElementById('celebration'); if(cl) { cl.classList.remove('hidden'); setTimeout(() => cl.classList.add('hidden'), 2500); } 
-            }
-        }
-        function updateRating(id, r) { logs = logs.map(b => b.id === id ? {...b, rating: r} : b); localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs)); renderAll(); }
-        function showHelp() { document.getElementById('help-modal').classList.remove('hidden'); }
-        function hideHelp() { document.getElementById('help-modal').classList.add('hidden'); }
-    </script>
+<!-- 学習ログ共通モジュール（全アプリ共通・不変） -->
+<script src="studyLog.js"></script>
+<script src="js/app.js"></script>
+<!-- 学習ログを記録ハブ（まなびクエスト）へ写す。読むだけで、このアプリの記録には触れない -->
+<script src="./js/records-hub-client.js" defer></script>
 </body>
 </html>

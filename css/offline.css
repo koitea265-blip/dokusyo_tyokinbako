@@ -1,0 +1,49 @@
+/* ============================================================
+   offline.html だけで つかう スタイル
+   ------------------------------------------------------------
+   色・かたち・フォントは css/style.css の トークンを そのまま つかう。
+   ここで見た目が変わると、児童に「アプリが こわれた」と思われてしまう。
+   ============================================================ */
+.offline-body{
+  display:flex;align-items:center;justify-content:center;
+  overflow:auto;
+  padding:calc(20px + var(--safe-top)) calc(16px + var(--safe-right))
+          calc(20px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+
+.offline-card{
+  width:100%;max-width:420px;
+  background:var(--panel);
+  border:var(--bd) solid var(--text);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  padding:26px 20px;
+  text-align:center;
+}
+
+.offline-ic{
+  width:64px;height:64px;
+  color:var(--primary);
+  margin-bottom:12px;
+}
+
+.offline-card h1{
+  font-size:clamp(18px,4.4vw,24px);
+  font-weight:900;
+  line-height:1.5;
+  margin-bottom:14px;
+}
+
+.offline-text{
+  font-size:var(--fs-body);
+  line-height:var(--lh-read);
+  color:var(--text);
+  margin-bottom:18px;
+}
+
+.offline-note{
+  margin-top:16px;
+  font-size:clamp(12px,0.3vw + 11px,13px);
+  line-height:var(--lh-read);
+  color:var(--ink-soft);
+}
